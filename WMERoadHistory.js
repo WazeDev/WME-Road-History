@@ -7,14 +7,14 @@
 // @include             https://www.waze.com/*/editor*
 // @include             https://beta.waze.com/*
 // @exclude      https://www.waze.com/user/editor*
-// @version             2018.03.18.01
+// @version             2018.03.18.1
 // @grant               none
 // @namespace           https://greasyfork.org/en/scripts/39715-wme-road-history
 // @copyright           2015 wlodek76
 // @credits             FZ69617 tips and tricks
 // ==/UserScript==
 
-var wmech_version = "1.2.2";
+var wmech_version = "2018.03.18.01";
 
 var epsg900913 = new OpenLayers.Projection("EPSG:900913");
 var epsg4326   = new OpenLayers.Projection("EPSG:4326");
