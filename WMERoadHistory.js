@@ -7,7 +7,7 @@
 // @include             https://www.waze.com/*/editor*
 // @include             https://beta.waze.com/*
 // @exclude      https://www.waze.com/user/editor*
-// @version             2018.03.18.1
+// @version             2018.07.31.1
 // @grant               none
 // @namespace           https://greasyfork.org/en/scripts/39715-wme-road-history
 // @copyright           2015 wlodek76
@@ -597,7 +597,7 @@ openrequest.onupgradeneeded = function(event) {
 //------------------------------------------------------------------------------------------------
 function bootstrapWMERoadHistory()
 {
-    if(!window.Waze.map) {
+    if(!window.W.map) {
         console.log('WME Road History: Waiting for WME...');
         setTimeout(bootstrapWMERoadHistory, 1000);
         return;
@@ -740,7 +740,7 @@ function updateSaveButton() {
 }
 //--------------------------------------------------------------------------------------------------------
 function stopRec(finished) {
-    var WM = window.Waze.map;
+    var WM = window.W.map;
     
     rec = false;
     updateSaveButton(rec);
@@ -1050,8 +1050,8 @@ function addDB(segID, roadtime, roadeditor, roaddir, roadkind, roadarrows, roadn
 //--------------------------------------------------------------------------------------------------------
 function SCAN_SEGMENTS() {
 
-    for (var seg in Waze.model.segments.objects) {
-        var segment    = Waze.model.segments.get(seg);
+    for (var seg in W.model.segments.getObjectArray()) {
+        var segment    = W.model.segments.getObjectById(seg);
         var attributes = segment.attributes;
         var line       = getId(segment.geometry.id);
         var segID      = attributes.id;
@@ -1096,7 +1096,7 @@ function SCAN_SEGMENTS() {
                 if (roadtime == roadcreated) roadequal = 1;
                 
                 var roadeditor = parseInt(attributes.updatedBy);
-                var user = Waze.model.users.get(roadeditor);
+                var user = W.model.users.getObjectById(roadeditor);
                 if (user === null || typeof(user) === "undefined") roadeditor = '-';
                 else                                               roadeditor = user.userName + '(' + user.normalizedLevel + ')';
                 
@@ -1124,20 +1124,20 @@ function SCAN_SEGMENTS() {
                 var roadnames = '';
                 var roadcity = '';
                 
-                var street = Waze.model.streets.get(attributes.primaryStreetID);
+                var street = W.model.streets.getObjectById(attributes.primaryStreetID);
                 if (street != undefined) {
                     if (street.name != null) {
                         roadnames += street.name;
                     }
                     if (street.cityID != null) {
-                        var city = Waze.model.cities.get(street.cityID);
+                        var city = W.model.cities.getObjectById(street.cityID);
                         roadcity = city.isEmpty ? '·' : city.name;
                     }
                 }
                 for(var j=0; j<attributes.streetIDs.length; j++) {
                     var sid = attributes.streetIDs[j];
                     if (sid !== null) {
-                        var street = Waze.model.streets.get(sid);
+                        var street = W.model.streets.getObjectById(sid);
                         if (street != undefined) {
                             if (street.name != null) {
                                 if (roadnames != '') roadnames += ", ";
@@ -1274,7 +1274,7 @@ function selectShowTurn(segs)
     for(var i=0; i<4; i++) {
         if (segs[i]==0) continue;
         
-        var segment = Waze.model.segments.get( segs[i] );
+        var segment = W.model.segments.getObjectById( segs[i] );
         if (segment != undefined) {
 
             var line = getId(segment.geometry.id);
@@ -1376,7 +1376,7 @@ function wmeroadhistoryLOOP()
         
         if (ready) {
 
-            var WM   = window.Waze.map;
+            var WM   = window.W.map;
             var zoom = WM.getZoom();
             var W    = WM.getSize().w;
             var H    = WM.getSize().h;
@@ -1462,7 +1462,7 @@ function wmeroadhistoryLOOP()
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistorySCANAREA() {
 
-    var WM = window.Waze.map;
+    var WM = window.W.map;
 
     if (rec) {
         stopRec(false);
@@ -1502,11 +1502,10 @@ function wmeroadhistorySCANAREA() {
         if (rec_zoom < 5)  rec_zoom = 5;
         if (rec_zoom > 10) rec_zoom = 10;
 
-        if (typeof Waze == 'undefined')              Waze = window.Waze;
-        if (typeof Waze.loginManager == 'undefined') Waze.loginManager = window.Waze.loginManager;
-        if (typeof Waze.loginManager == 'undefined') Waze.loginManager = window.loginManager;
-        if (Waze.loginManager !== null && Waze.loginManager.isLoggedIn()) {
-            thisUser = Waze.loginManager.user;
+        if (typeof W == 'undefined')              W = window.W;
+        if (typeof W.loginManager == 'undefined') W.loginManager = window.W.loginManager;
+        if (W.loginManager && W.loginManager.isLoggedIn()) {
+            thisUser = W.loginManager.user;
             var lev = thisUser.normalizedLevel;
             if (thisUser !== null && (lev*lev >= lev+lev+lev || thisUser.isAreaManager)) {
 
@@ -1525,7 +1524,7 @@ function htmlEntities(str) {
 }
 //--------------------------------------------------------------------------------------------------------
 function createLink(segx, segy, zoom, idsegments) {
-    var WM = window.Waze.map;
+    var WM = window.W.map;
 
     var docurl = document.URL;
     var docurlparams = docurl.split('&');
@@ -1549,7 +1548,7 @@ function createLink(segx, segy, zoom, idsegments) {
 }
 //--------------------------------------------------------------------------------------------------------
 function gotoSEG(x, y, segid) {
-    var WM = window.Waze.map;
+    var WM = window.W.map;
     var xy = new OL.LonLat( x, y );
     
     WM.panTo(xy);
@@ -1562,7 +1561,7 @@ function gotoSEG(x, y, segid) {
 }
 //--------------------------------------------------------------------------------------------------------
 function gotoTURN(event) {
-    var WM = window.Waze.map;
+    var WM = window.W.map;
     
     var segs = event.target.id.split('_');
     var seg1 = parseInt( segs[1] );
@@ -1660,7 +1659,7 @@ function formatRestriction(str, bs, be) {
 //--------------------------------------------------------------------------------------------------------
 function create_markers_layer() {
     
-    var WM = window.Waze.map;
+    var WM = window.W.map;
 	var OL = window.OpenLayers;
     
     var mlayers = WM.getLayersBy("uniqueName","__WMERoadHistoryMarkers");
@@ -1710,7 +1709,7 @@ function create_markers_layer() {
 //--------------------------------------------------------------------------------------------------------
 function remove_markers() {
     
-    var WM = window.Waze.map;
+    var WM = window.W.map;
 	var OL = window.OpenLayers;
     
     markerskey = {};
@@ -1739,7 +1738,7 @@ function add_markers_from_list() {
     if (!showcircle && !showcircleshort && !showcirclelong) return;
     
 	// przygotowanie danych warstwy '__WMERoadHistoryMarkers'
-    var WM = window.Waze.map;
+    var WM = window.W.map;
 	var OL = window.OpenLayers;
 
 	var mlayers = WM.getLayersBy("uniqueName","__WMERoadHistoryMarkers");
@@ -3296,11 +3295,10 @@ function initialiseWMERoadHistory()
 	addon.className = "tab-pane";
 	tabContent.appendChild(addon);
 
-    if (typeof Waze == 'undefined')              Waze = window.Waze;
-    if (typeof Waze.loginManager == 'undefined') Waze.loginManager = window.Waze.loginManager;
-    if (typeof Waze.loginManager == 'undefined') Waze.loginManager = window.loginManager;
-    if (Waze.loginManager !== null && Waze.loginManager.isLoggedIn()) {
-        thisUser = Waze.loginManager.user;
+    if (typeof W == 'undefined')              W = window.W;
+    if (typeof W.loginManager == 'undefined') W.loginManager = window.W.loginManager;
+    if (W.loginManager && W.loginManager.isLoggedIn()) {
+        thisUser = W.loginManager.user;
         var lev = thisUser.normalizedLevel;
         if (thisUser !== null && (lev*lev >= lev+lev+lev || thisUser.isAreaManager)) {
             getId('wmeroadhistory_scanarea').onclick  = wmeroadhistorySCANAREA;
@@ -3350,10 +3348,10 @@ function initialiseWMERoadHistory()
         }
     }
 
-    Waze.vent.on("operationPending", function() {
+    W.vent.on("operationPending", function() {
         ventCount++;
     });
-    Waze.vent.on("operationDone", function() {
+    W.vent.on("operationDone", function() {
         ventCount--;
         if (ventCount < 0) ventCount = 0;
     });
