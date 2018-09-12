@@ -7,19 +7,28 @@
 // @include             https://www.waze.com/*/editor*
 // @include             https://beta.waze.com/*
 // @exclude      https://www.waze.com/user/editor*
-// @version             2018.07.31.1
+// @version             2018.09.12.01
 // @grant               none
 // @namespace           https://greasyfork.org/en/scripts/39715-wme-road-history
 // @copyright           2015 wlodek76
 // @credits             FZ69617 tips and tricks
 // ==/UserScript==
 
+/* global W */
+/* global OL */
+/* ecmaVersion 2017 */
+/* global $ */
+/* global I18n */
+/* global require */
+/* eslint no-multi-spaces: ["warn", { ignoreEOLComments:true, exceptions: { "VariableDeclarator": true} }]*/
+/* eslint curly: ["warn", "multi-or-nest"] */
+
 var wmech_version = "2018.03.18.01";
 
-var epsg900913 = new OpenLayers.Projection("EPSG:900913");
-var epsg4326   = new OpenLayers.Projection("EPSG:4326");
+var epsg900913 = new OL.Projection("EPSG:900913");
+var epsg4326   = new OL.Projection("EPSG:4326");
 
-var lang   = {code:'en',
+var lang = {code:'en',
               summarystats    : 'Statistic of the latest edits',
               statedits       : ' ed.',
               showcircle      : 'Colorize edits on the map',
@@ -313,12 +322,10 @@ var saveAs = saveAs
 || (function(view) {
     "use strict";
     // IE <10 is explicitly unsupported
-    if (typeof navigator !== "undefined" &&
-        /MSIE [1-9]\./.test(navigator.userAgent)) {
+    if (typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent))
         return;
-    }
-    var
-    doc = view.document
+
+    var doc = view.document
     // only get URL when necessary in case Blob.js hasn't overridden it yet
     , get_URL = function() {
         return view.URL || view.webkitURL || view;
@@ -354,11 +361,10 @@ var saveAs = saveAs
                 file.remove();
             }
         };
-        if (view.chrome) {
+        if (view.chrome)
             revoker();
-        } else {
+        else
             setTimeout(revoker, arbitrary_revoke_timeout);
-        }
     }
     , dispatch = function(filesaver, event_types, event) {
         event_types = [].concat(event_types);
@@ -388,12 +394,11 @@ var saveAs = saveAs
         // on any filesys errors revert to saving with object URLs
         , fs_error = function() {
             // don't create more object URLs than needed
-            if (blob_changed || !object_url) {
+            if (blob_changed || !object_url)
                 object_url = get_URL().createObjectURL(blob);
-            }
-            if (target_view) {
+            if (target_view)
                 target_view.location.href = object_url;
-            } else {
+            else {
                 var new_tab = view.open(object_url, "_blank");
                 if (new_tab == undefined && typeof safari !== "undefined") {
                     //Apple do not allow window.open, see http://bit.ly/1kZffRI
@@ -406,18 +411,16 @@ var saveAs = saveAs
         }
         , abortable = function(func) {
             return function() {
-                if (filesaver.readyState !== filesaver.DONE) {
+                if (filesaver.readyState !== filesaver.DONE)
                     return func.apply(this, arguments);
-                }
             };
         }
         , create_if_not_found = {create: true, exclusive: false}
         , slice
         ;
         filesaver.readyState = filesaver.INIT;
-        if (!name) {
+        if (!name)
             name = "download";
-        }
         if (can_use_save_link) {
             object_url = get_URL().createObjectURL(blob);
             save_link.href = object_url;
@@ -429,9 +432,9 @@ var saveAs = saveAs
             return;
         }
         // prepend BOM for UTF-8 XML and text/plain types
-        if (/^\s*(?:text\/(?:plain|xml)|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+        if (/^\s*(?:text\/(?:plain|xml)|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type))
             blob = new Blob(["\ufeff", blob], {type: blob.type});
-        }
+
         // Object and web filesystem URLs have a problem saving in Google Chrome when
         // viewed in a tab, so I force save with application/octet-stream
         // http://code.google.com/p/chromium/issues/detail?id=91158
@@ -445,12 +448,10 @@ var saveAs = saveAs
         // Since I can't be sure that the guessed media type will trigger a download
         // in WebKit, I append .download to the filename.
         // https://bugs.webkit.org/show_bug.cgi?id=65440
-        if (webkit_req_fs && name !== "download") {
+        if (webkit_req_fs && name !== "download")
             name += ".download";
-        }
-        if (type === force_saveable_type || webkit_req_fs) {
+        if (type === force_saveable_type || webkit_req_fs)
             target_view = view;
-        }
         if (!req_fs) {
             fs_error();
             return;
@@ -469,9 +470,8 @@ var saveAs = saveAs
                             };
                             writer.onerror = function() {
                                 var error = writer.error;
-                                if (error.code !== error.ABORT_ERR) {
+                                if (error.code !== error.ABORT_ERR)
                                     fs_error();
-                                }
                             };
                             "writestart progress write abort".split(" ").forEach(function(event) {
                                 writer["on" + event] = filesaver["on" + event];
@@ -490,11 +490,10 @@ var saveAs = saveAs
                     file.remove();
                     save();
                 }), abortable(function(ex) {
-                    if (ex.code === ex.NOT_FOUND_ERR) {
+                    if (ex.code === ex.NOT_FOUND_ERR)
                         save();
-                    } else {
+                    else
                         fs_error();
-                    }
                 }));
             }), fs_error);
         }), fs_error);
@@ -527,15 +526,14 @@ var saveAs = saveAs
     typeof self !== "undefined" && self
     || typeof window !== "undefined" && window
     || this.content
-   ));
+));
 //------------------------------------------------------------------------------------------------
 window.indexedDB      = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
 window.IDBKeyRange    = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange
 
-if (!window.indexedDB) {
+if (!window.indexedDB)
     window.alert("Your browser doesn't support a stable version of IndexedDB.")
-}
 //------------------------------------------------------------------------------------------------
 var docurl = window.document.URL;
 if (docurl.indexOf( "/pl/" ) >=0 ) lang = langPL;
@@ -555,24 +553,24 @@ openrequest.onerror = function(event) {
     alert(lang.dbopenerror);
 };
 
-openrequest.onupgradeneeded = function(event) { 
-    
+openrequest.onupgradeneeded = function(event) {
+
     var db = event.target.result;
     console.log("WMERoadHistory.DataBase.Upgrade: ", db);
-    
-    storeSEG = false;
-    storeCHG = false;
+
+    var storeSEG = false;
+    var storeCHG = false;
     var stores = db.objectStoreNames;
     for(var n=0; n<stores.length; n++) {
         if ( stores[n] == 'segments') storeSEG = true;
-        if ( stores[n] == 'changes')  storeCHG = true;
+        if ( stores[n] == 'changes') storeCHG = true;
     }
 
     if (storeSEG) {
     }
     else {
         var newStore = db.createObjectStore("segments", { keyPath: "ID", autoIncrement: false });
-        newStore.createIndex("T",    "T",    { unique: false });
+        newStore.createIndex("T", "T", { unique: false });
     }
 
     if (storeCHG) {
@@ -580,16 +578,16 @@ openrequest.onupgradeneeded = function(event) {
 
         var nameID = '';
         var nameT  = '';
-        for(var n=0; n<currentStore.indexNames.length; n++) {
+        for(let n=0; n<currentStore.indexNames.length; n++) {
             var name = currentStore.indexNames[n];
             if (name == 'ID') nameID = name;
-            if (name == 'T')  nameT = name;
+            if (name == 'T') nameT = name;
         }
-        if (nameT  == '') currentStore.createIndex("T",  "T",  { unique: false });
+        if (nameT == '') currentStore.createIndex("T", "T", { unique: false });
         if (nameID == '') currentStore.createIndex("ID", "ID", { unique: false });
     }
     else {
-        var newStore = db.createObjectStore("changes", { keyPath: "nr", autoIncrement: true });
+        let newStore = db.createObjectStore("changes", { keyPath: "nr", autoIncrement: true });
         newStore.createIndex("T",    "T",   { unique: false });
         newStore.createIndex("ID",   "ID",  { unique: false });
     }
@@ -609,9 +607,9 @@ function bootstrapWMERoadHistory()
 }
 //------------------------------------------------------------------------------------------------
 function saveOptions() {
-    
+
     var options = '';
-    
+
     var opt0  = getId('_wmeRoadHistoryRows');
     var opt1  = getId('_wmeRoadHistoryFromYear');
     var opt2  = getId('_wmeRoadHistoryFromMonth');
@@ -625,7 +623,7 @@ function saveOptions() {
     var opt10 = getId('_wmeRoadHistoryShowCircleShort');
     var opt11 = getId('_wmeRoadHistoryShowCircleLong');
     var opt12 = getId('_wmeRoadHistorySummaryStats');
-    
+
     if (opt0  != undefined) options += opt0.value    + "|";
     if (opt1  != undefined) options += opt1.value    + "|";
     if (opt2  != undefined) options += opt2.value    + "|";
@@ -644,7 +642,7 @@ function saveOptions() {
 }
 //------------------------------------------------------------------------------------------------
 function loadOptions() {
-    
+
     if (localStorage.WMERoadHistoryOptions) {
         var options = localStorage.WMERoadHistoryOptions.split('|');
 
@@ -669,7 +667,7 @@ function getElementsByClassName(classname, node) {
     var a = [];
     var re = new RegExp('\\b' + classname + '\\b');
     var els = node.getElementsByTagName("*");
-    for (var i=0,j=els.length; i<j; i++)
+    for (let i=0,j=els.length; i<j; i++)
         if (re.test(els[i].className)) a.push(els[i]);
     return a;
 }
@@ -680,24 +678,22 @@ function getId(node) {
 //--------------------------------------------------------------------------------------------------------
 function precFloat(f, prec)
 {
-	if (!isFinite(f)) return "&mdash;";
+    if (!isFinite(f)) return "&mdash;";
 
-	if (f < 0) {
-		f -= Math.pow(0.1, prec) * 0.5;
-	}
-	else {
-		f += Math.pow(0.1, prec) * 0.5;
-	}
+    if (f < 0)
+        f -= Math.pow(0.1, prec) * 0.5;
+    else
+        f += Math.pow(0.1, prec) * 0.5;
 
-	var ipart = parseInt(f);
-	var fpart = Math.abs(f - ipart);
-	f = ipart;
+    var ipart = parseInt(f);
+    var fpart = Math.abs(f - ipart);
+    f = ipart;
 
-	if (fpart == '0') fpart = '0.0';
-	fpart += '0000000000000000';
-	if (prec) f += fpart.substr(1, prec + 1);
+    if (fpart == '0') fpart = '0.0';
+    fpart += '0000000000000000';
+    if (prec) f += fpart.substr(1, prec + 1);
 
-	return f;
+    return f;
 }
 //--------------------------------------------------------------------------------------------------------
 function createCRC32() {
@@ -705,9 +701,8 @@ function createCRC32() {
         crcTable = [];
     for (i = 0; i < 256; i++) {
         c = i;
-        for (j = 0; j < 8; j++) {
+        for (j = 0; j < 8; j++)
             c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
-        }
         crcTable[i] = c;
     }
 
@@ -715,9 +710,8 @@ function createCRC32() {
         var i,
             crc = 0 ^ (-1);
 
-        for (i = 0; i < str.length; i++) {
+        for (i = 0; i < str.length; i++)
             crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
-        }
 
         return (crc ^ (-1)) >>> 0;
     };
@@ -727,7 +721,7 @@ var crc32 = createCRC32();
 //--------------------------------------------------------------------------------------------------------
 function updateSaveButton() {
     var obj = getId('wmeroadhistory_scanarea');
-    if (rec == true)  {
+    if (rec == true) {
         obj.style.backgroundColor = '#C00000';
         obj.style.color           = '#FFFFFF';
         obj.innerHTML             = lang.stop;
@@ -741,7 +735,7 @@ function updateSaveButton() {
 //--------------------------------------------------------------------------------------------------------
 function stopRec(finished) {
     var WM = window.W.map;
-    
+
     rec = false;
     updateSaveButton(rec);
 
@@ -756,43 +750,43 @@ function stopRec(finished) {
 //--------------------------------------------------------------------------------------------------------
 function getMidPointLen(seg) {
 
-	var points, p1, p2;
-	points = seg.geometry.components.length;
-    
+    var points, p1, p2;
+    points = seg.geometry.components.length;
+
     var x      = 0;
     var y      = 0;
     var length = 0;
 
-	if (points == 2) {
-		p1 = seg.geometry.components[0];
-		p2 = seg.geometry.components[1];
-        
-		x = p1.x + (p2.x - p1.x) * 0.5;
+    if (points == 2) {
+        p1 = seg.geometry.components[0];
+        p2 = seg.geometry.components[1];
+
+        x = p1.x + (p2.x - p1.x) * 0.5;
         y = p1.y + (p2.y - p1.y) * 0.5;
 
-        var dx = p2.x - p1.x;
-        var dy = p2.y - p1.y;
+        let dx = p2.x - p1.x;
+        let dy = p2.y - p1.y;
         length += Math.sqrt(dx*dx + dy*dy);
     }
     else {
 
-        for(var i=0; i<points-1; i++) {
+        for(let i=0; i<points-1; i++) {
             p1 = seg.geometry.components[i + 0];
             p2 = seg.geometry.components[i + 1];
 
-            var dx = p2.x - p1.x;
-            var dy = p2.y - p1.y;
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
             length += Math.sqrt(dx*dx + dy*dy);
         }
         var midlen = length / 2.0;
 
         var length1 = 0;
         var length2 = 0;
-        for(var i=0; i<points-1; i++) {
+        for(let i=0; i<points-1; i++) {
             p1 = seg.geometry.components[i + 0];
             p2 = seg.geometry.components[i + 1];
-            var dx = p2.x - p1.x;
-            var dy = p2.y - p1.y;
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
             length1 = length2;
             length2 = length2 + Math.sqrt(dx*dx + dy*dy);
 
@@ -803,7 +797,7 @@ function getMidPointLen(seg) {
             }
         }
     }
-    
+
     return { x:x, y:y, d:length};
 }
 //------------------------------------------------------------------------------------------------
@@ -812,19 +806,19 @@ function merge_imported_change_DB_Sync(item) {
     var objstore = wazeDB.transaction( 'changes', 'readonly').objectStore('changes');
     var range = IDBKeyRange.only( item.ID );
     var index = objstore.index( 'ID' );
-    
+
     var idexists     = false;
     var foundthesame = false;
-    
+
     index.openCursor(range, "next").onsuccess = function(event) {
         var cursor = event.target.result;
-        
+
         if (cursor) {
             idexists = true;
-            
+
             var rekord = cursor.value;
             var diff = false;
-            
+
             if (rekord.E != item.E) diff = true;
             if (rekord.D != item.D) diff = true;
             if (rekord.x != item.x) diff = true;
@@ -854,7 +848,7 @@ function merge_imported_change_DB_Sync(item) {
             if (rekord.geB  != item.geB)  diff = true;
             if (rekord.tolA != item.tolA) diff = true;
             if (rekord.tolB != item.tolB) diff = true;
-            
+
             if (!diff) foundthesame = true;
 
             cursor.continue();
@@ -867,8 +861,8 @@ function merge_imported_change_DB_Sync(item) {
                 }
                 else {
 
-                    var objectStore = wazeDB.transaction('changes', 'readwrite').objectStore('changes');
-                    var request = objectStore.put( item );
+                    let objectStore = wazeDB.transaction('changes', 'readwrite').objectStore('changes');
+                    let request = objectStore.put( item );
                     request.onsuccess = function() {
                         getId('wmerh_progress_info').innerHTML = lang.importeddata + (importcount - importchunk) + ' / ' + (importmaxcount - 2);
                         setTimeout(wmeroadhistoryIMPORTLOOP, 1);
@@ -876,9 +870,8 @@ function merge_imported_change_DB_Sync(item) {
                 }
             }
             else {
-
-                var objectStore = wazeDB.transaction('changes', 'readwrite').objectStore('changes');
-                var request = objectStore.put( item );
+                let objectStore = wazeDB.transaction('changes', 'readwrite').objectStore('changes');
+                let request = objectStore.put( item );
                 request.onsuccess = function() {
                     getId('wmerh_progress_info').innerHTML = lang.importeddata + (importcount - importchunk) + ' / ' + (importmaxcount - 2);
                     setTimeout(wmeroadhistoryIMPORTLOOP, 1);
@@ -911,7 +904,7 @@ function changesDB(diff, segID, segtime, segeditor, segx, segy, segnames, segcit
     if (diff & DIFF_GEOM)  item.geB   =  after.G;
     if (diff & DIFF_TOLL)  item.tolA  = before.TL;
     if (diff & DIFF_TOLL)  item.tolB  =  after.TL;
-    
+
     var objectStore = wazeDB.transaction('changes', 'readwrite').objectStore('changes');
     var request = objectStore.add( item );
     request.onsuccess = function() {
@@ -941,97 +934,92 @@ function addDB(segID, roadtime, roadeditor, roaddir, roadkind, roadarrows, roadn
                     var b = rekord.A.split('·');
                     a.sort();
                     b.sort();
-                    if ( a.toString() != b.toString() ) {
+                    if (a.toString() != b.toString())
                         diff |= DIFF_TURNS;
-                    }
                 }
-                else {
+                else
                     diff |= DIFF_TURNS;
-                }
             }
-            if (roadnames   != rekord.N)   {
+            if (roadnames != rekord.N)   {
                 //poprawione porównywanie nazw Alt, zdarza się, że nazwy w Alt potrafią być zwrócone przez mechanizm WME w innej przypadkowej kolejności!
                 var names1 = roadnames.split(',');
                 var names2 = rekord.N.split(',');
                 names1.sort();
                 names2.sort();
-                if ( names1.toString() != names2.toString() ) {
+                if (names1.toString() != names2.toString())
                     diff |= DIFF_NAMES;
-                }
             }
-            if (roadcity    != rekord.C)   diff |= DIFF_CITY;
+            if (roadcity != rekord.C) diff |= DIFF_CITY;
 
             //posortowanie i porównanie wpisów zawierających ograniczenia bazujące na czasie, mogą być w różnej kolejności zwrócone przez mechanizm WME
             //kolejność ograniczeń na liście nie ma znaczenia są traktowane operatorem logicznym OR
             //zmiana tej kolejności nie powinna być odnotowana jako zmiana edycyjna przez skrypt stąd wcześniejsze posortowanie i dopiero porównanie danych
-            if (roadtr      != rekord.TR)  {
+            if (roadtr != rekord.TR)  {
                 var tab1 = roadtr.split('²');
                 var tab2 = rekord.TR.split('²');
                 tab1.sort();
                 tab2.sort();
                 var vstr1 = '';
                 var vstr2 = '';
-                for(var i=0; i<tab1.length; i++) {
-                    var v = tab1[i].split('¹');
+                for(let i=0; i<tab1.length; i++) {
+                    let v = tab1[i].split('¹');
                     v.sort();
                     vstr1 += v.toString();
                 }
-                for(var i=0; i<tab2.length; i++) {
-                    var v = tab2[i].split('¹');
+                for(let i=0; i<tab2.length; i++) {
+                    let v = tab2[i].split('¹');
                     v.sort();
                     vstr2 += v.toString();
                 }
-                if ( vstr1.toString() != vstr2.toString() ) {
+                if (vstr1.toString() != vstr2.toString())
                     diff |= DIFF_TR;
-                }
             }
-            
+
             //posortowanie i porównanie wpisów zawierających ograniczenia dla skrętów, mogą być w różnej kolejności zwrócone przez mechanizm WME
             //kolejność ograniczeń na liście nie ma znaczenia są traktowane operatorem logicznym OR
             //zmiana tej kolejności nie powinna być odnotowana jako zmiana edycyjna przez skrypt stąd wcześniejsze posortowanie i dopiero porównanie danych
-            if (roadts      != rekord.TS)  {
-                var tab1 = roadts.split('²');
-                var tab2 = rekord.TS.split('²');
+            if (roadts != rekord.TS)  {
+                let tab1 = roadts.split('²');
+                let tab2 = rekord.TS.split('²');
                 tab1.sort();
                 tab2.sort();
-                var vstr1 = '';
-                var vstr2 = '';
-                for(var i=0; i<tab1.length; i++) {
-                    var v = tab1[i].split('¹');
+                let vstr1 = '';
+                let vstr2 = '';
+                for(let i=0; i<tab1.length; i++) {
+                    let v = tab1[i].split('¹');
                     v.sort();
                     vstr1 += v.toString();
                 }
-                for(var i=0; i<tab2.length; i++) {
-                    var v = tab2[i].split('¹');
+                for(let i=0; i<tab2.length; i++) {
+                    let v = tab2[i].split('¹');
                     v.sort();
                     vstr2 += v.toString();
                 }
-                if ( vstr1.toString() != vstr2.toString() ) {
+                if (vstr1.toString() != vstr2.toString())
                     diff |= DIFF_TS;
-                }
             }
-            
-            if (roadlevel   != rekord.L)   diff |= DIFF_LEVEL;
+
+            if (roadlevel != rekord.L) diff |= DIFF_LEVEL;
             //porównanie dwóch sum kontrolnych w starej i nowej wersji
-            if (roadgeom    != rekord.G && roadgeom2 != rekord.G) {
+            if (roadgeom != rekord.G && roadgeom2 != rekord.G) {
                 //sprawdzenie czy wraz ze zmianą geometrii zmienił się również znacznik czasowy
                 //czy różnica jest wynikiem błędu zaokrąglenia starej sumy
                 if (roadtime != rekord.T) {
                     diff |= DIFF_GEOM;
                 }
             }
-            if (roadtoll    != rekord.TL)  diff |= DIFF_TOLL;
+            if (roadtoll != rekord.TL) diff |= DIFF_TOLL;
 
             if (diff) {
                 if (roadtime == rekord.T) {
-                    var t = new Date();
-                    roadtime   = parseInt(t.getTime() / 1000);
+                    let t = new Date();
+                    roadtime = parseInt(t.getTime() / 1000);
                     roadeditor = '?';
                 }
-                
+
                 changesDB(diff, segID, roadtime, roadeditor, roadx, roady, roadnames, roadcity, rekord, item, roadkind, roadequal);
             }
-            
+
             //aktualizacja rekordu w bazie danych zawsze
             objectStore.put( item );
             scanned_segments++;
@@ -1039,7 +1027,7 @@ function addDB(segID, roadtime, roadeditor, roaddir, roadkind, roadarrows, roadn
         else {
             added_segments++;
 
-            var item = { ID: segID, T: roadtime, E: roadeditor, D: roaddir, K: roadkind, A: roadarrows, N: roadnames, C: roadcity, TR: roadtr, TS:roadts, L: roadlevel, G: roadgeom2, TL: roadtoll, x: roadx, y: roady, Q:roadequal, P:roadpoints };
+            let item = { ID: segID, T: roadtime, E: roadeditor, D: roaddir, K: roadkind, A: roadarrows, N: roadnames, C: roadcity, TR: roadtr, TS:roadts, L: roadlevel, G: roadgeom2, TL: roadtoll, x: roadx, y: roady, Q:roadequal, P:roadpoints };
             objectStore.put( item );
             scanned_segments++;
         }
@@ -1049,24 +1037,22 @@ function addDB(segID, roadtime, roadeditor, roaddir, roadkind, roadarrows, roadn
 }
 //--------------------------------------------------------------------------------------------------------
 function SCAN_SEGMENTS() {
+    let segments = W.model.segments.getObjectArray();
 
-    for (var seg in W.model.segments.getObjectArray()) {
-        var segment    = W.model.segments.getObjectById(seg);
+    for(let i=0;i<segments.length;i++){//(var seg in W.model.segments.getObjectArray()) {
+        var segment    = segments[i]; //W.model.segments.getObjectById(seg);
         var attributes = segment.attributes;
         var line       = getId(segment.geometry.id);
         var segID      = attributes.id;
 
         if (line !== null && segID !== null) {
-
             if (scanned_segments_list[segID] === undefined) {
                 scanned_segments_list[segID] = 1;
 
-                
                 var xyd = getMidPointLen( segment );
                 var roadx = parseInt( xyd.x );
                 var roady = parseInt( xyd.y );
 
-               
                 var roadpoints = [];
                 var points = attributes.geometry.components;
                 var num = points.length;
@@ -1074,7 +1060,6 @@ function SCAN_SEGMENTS() {
                 roadpoints.push ( parseInt(points[0].y + 0.5) );
                 roadpoints.push ( parseInt(points[num-1].x + 0.5) );
                 roadpoints.push ( parseInt(points[num-1].y + 0.5) );
-
 
                 //sprawdzenie czy oba końce drogi są poza skanowanym obszarem mapy
                 var both_ends_behind_scanarea = 0;
@@ -1087,28 +1072,29 @@ function SCAN_SEGMENTS() {
                 if (roadpoints[3] > rec_xy1.lat) both_ends_behind_scanarea |= 2;
                 if (roadpoints[3] < rec_xy2.lat) both_ends_behind_scanarea |= 2;
                 if (both_ends_behind_scanarea == 3) continue;
-                
 
                 var roadtime      = parseInt(attributes.updatedOn / 1000);
                 var roadcreated   = parseInt(attributes.createdOn / 1000);
                 var roadequal     = 0;
-                
+
                 if (roadtime == roadcreated) roadequal = 1;
-                
+
                 var roadeditor = parseInt(attributes.updatedBy);
                 var user = W.model.users.getObjectById(roadeditor);
-                if (user === null || typeof(user) === "undefined") roadeditor = '-';
-                else                                               roadeditor = user.userName + '(' + user.normalizedLevel + ')';
-                
+                if (user === null || typeof(user) === "undefined")
+                    roadeditor = '-';
+                else
+                    roadeditor = user.userName + '(' + user.normalizedLevel + ')';
+
                 var roadkind = parseInt(attributes.roadType);
                 var roaddir  = (attributes.fwdDirection ? 1 : 0) * 2 + (attributes.revDirection ? 1 : 0);
 
                 var roadarrows = '';
-                
+
                 //zwraca różną kolejność danych na różnych platformach Chrome/Firefox
                 //for (s in attributes.fromConnections) { roadarrows += 'A' + parseInt(s) + '·'; }
                 //for (s in attributes.toConnections)   { roadarrows += 'B' + parseInt(s) + '·'; }
-                
+
                 //procedura zapewniająca tę samą kolejność danych za pomocą sortowania
                 //istotne podczas porównywania utworzonych rekordów na różnych platformach Chrome/Firefox
                 var fromConn = new Array();
@@ -1117,14 +1103,16 @@ function SCAN_SEGMENTS() {
                 for (s in attributes.toConnections)   {   toConn.push( parseInt(s) ); }
                 fromConn.sort();
                 toConn.sort();
-                for (var i=0; i<fromConn.length; i++) { roadarrows += 'A' + fromConn[i] + '·'; }
-                for (var i=0; i<toConn.length;   i++) { roadarrows += 'B' + toConn[i]   + '·'; }
-                
+                for (let i=0; i<fromConn.length; i++)
+                    roadarrows += 'A' + fromConn[i] + '·';
+                for (let i=0; i<toConn.length;   i++)
+                    roadarrows += 'B' + toConn[i]   + '·';
+
 
                 var roadnames = '';
                 var roadcity = '';
-                
-                var street = W.model.streets.getObjectById(attributes.primaryStreetID);
+
+                let street = W.model.streets.getObjectById(attributes.primaryStreetID);
                 if (street != undefined) {
                     if (street.name != null) {
                         roadnames += street.name;
@@ -1137,7 +1125,7 @@ function SCAN_SEGMENTS() {
                 for(var j=0; j<attributes.streetIDs.length; j++) {
                     var sid = attributes.streetIDs[j];
                     if (sid !== null) {
-                        var street = W.model.streets.getObjectById(sid);
+                        let street = W.model.streets.getObjectById(sid);
                         if (street != undefined) {
                             if (street.name != null) {
                                 if (roadnames != '') roadnames += ", ";
@@ -1146,13 +1134,14 @@ function SCAN_SEGMENTS() {
                         }
                     }
                 }
-                
+
                 var roadtr = '';
-                
+
+                /* //This is broken right now - have to change to check the turngraph...which is ugly and complicated
                 var tr = attributes.fwdRestrictions;
                 if (tr.length) {
                     roadtr += 'AB¹';
-                    for(var i=0; i<tr.length; i++) {
+                    for(let i=0; i<tr.length; i++) {
                         roadtr += (tr[i].allDay==true ? 1 : 0) + '·';
                         roadtr += tr[i].days + '·';
                         roadtr += tr[i].description + '·';
@@ -1165,11 +1154,11 @@ function SCAN_SEGMENTS() {
                     }
                     roadtr += '²';
                 }
-                
+
                 var tr = attributes.revRestrictions;
                 if (tr.length) {
                     roadtr += 'BA¹';
-                    for(var i=0; i<tr.length; i++) {
+                    for(let i=0; i<tr.length; i++) {
                         roadtr += (tr[i].allDay==true ? 1 : 0) + '·';
                         roadtr += tr[i].days + '·';
                         roadtr += tr[i].description + '·';
@@ -1182,13 +1171,13 @@ function SCAN_SEGMENTS() {
                     }
                     roadtr += '²';
                 }
-                
+*/
                 var roadts = '';
-
+/*
                 for(trseg in attributes.toRestrictions) {
                     var tr = attributes.toRestrictions[trseg];
                     roadts += 'B' + trseg + '¹';
-                    for(var i=0; i<tr.length; i++) {
+                    for(let i=0; i<tr.length; i++) {
                         roadts += (tr[i].allDay==true ? 1 : 0) + '·';
                         roadts += tr[i].days + '·';
                         roadts += tr[i].description + '·';
@@ -1205,7 +1194,7 @@ function SCAN_SEGMENTS() {
                 for(trseg in attributes.fromRestrictions) {
                     var tr = attributes.fromRestrictions[trseg];
                     roadts += 'A' + trseg + '¹';
-                    for(var i=0; i<tr.length; i++) {
+                    for(let i=0; i<tr.length; i++) {
                         roadts += (tr[i].allDay==true ? 1 : 0) + '·';
                         roadts += tr[i].days + '·';
                         roadts += tr[i].description + '·';
@@ -1217,12 +1206,12 @@ function SCAN_SEGMENTS() {
                         roadts += tr[i].vehicleTypes + '¹';
                     }
                     roadts += '²';
-                }
-                
+                }*/
+
                 var roadlevel = parseInt(attributes.level);
                 var roadgeom  = crc32(attributes.geometry.toString());
                 var roadtoll  = (attributes.fwdToll ? 1 : 0) * 2 + (attributes.revToll ? 1 : 0);
-                
+
                 //pod Chrome i Firefox występują różne błędy zaokrągleń w rezultacie jest inna suma kontrolna geometrii!!!
                 //porównanie dwóch wariantów sum kontrolnych starej i zastąpienie nową z poprawionym błędem zaokrąglenia
                 var pstr = '';
@@ -1234,8 +1223,8 @@ function SCAN_SEGMENTS() {
                     else    pstr += ',POINT(' + xrounded + ' ' + yrounded + ')';
                 }
                 var roadgeom2 = crc32(pstr);
-                
-               
+
+
                 addDB(segID, roadtime, roadeditor, roaddir, roadkind, roadarrows, roadnames, roadcity, roadtr, roadts, roadlevel, roadgeom, roadgeom2, roadtoll, roadx, roady, roadequal, roadpoints);
             }
         }
@@ -1248,52 +1237,51 @@ function updateCountTime() {
     var tNow = new Date();
     var t = parseInt( (tNow.getTime() - rec_elapsed_time) / 1000);
     var ts = '';
-    if (t < 60) {
+    if (t < 60)
         ts = t + '&nbsp;' + lang.sec;
-    }
     else {
         var a = parseInt(t / 60);
         var b = t - a*60;
         if (b<10) ts = a + ':0' + b + '&nbsp;min.'
         else      ts = a + ':'  + b + '&nbsp;min.'
     }
-    
+
     var bs = '';
     var be = '';
     if (added_changes) {
         bs = '<b>';
         be = '</b>';
     }
-    
-    getId('wmeroadhistory_log').innerHTML = lang.segments + ':&nbsp;' + scanned_segments + ' &nbsp; ' + bs + lang.changes + ':&nbsp;'  + added_changes + be + '<br>' + '(' + ts + ')' + scanproc;
+
+    getId('wmeroadhistory_log').innerHTML = lang.segments + ':&nbsp;' + scanned_segments + ' &nbsp; ' + bs + lang.changes + ':&nbsp;' + added_changes + be + '<br>(' + ts + ')' + scanproc;
 }
 //--------------------------------------------------------------------------------------------------------
 function selectShowTurn(segs)
 {
-    
-    for(var i=0; i<4; i++) {
+
+    for(let i=0; i<4; i++) {
         if (segs[i]==0) continue;
-        
+
         var segment = W.model.segments.getObjectById( segs[i] );
         if (segment != undefined) {
 
             var line = getId(segment.geometry.id);
             if (line !== null) {
-                
+
                 var color     = line.getAttribute("stroke");
                 var opacity   = line.getAttribute("stroke-opacity");
                 var lineWidth = line.getAttribute("stroke-width");
-                
+
                 var kol1 = '#FE61FE';
                 var kol2 = '#FE01FE';
-                
+
                 var selected = false;
                 //if (opacity == 1 || lineWidth == 9) selected = true;   // nie działa poprawnie zaznaczanie - wchodzi w interakcję z WME Highlights
                 //if (color == kol1) selected = false;
                 //if (color == kol2) selected = false;
                 if (color == '#03b9da') selected = true;
                 if (color == '#00d8ff') selected = true;
-                
+
                 if (!selected) {
                     if (i < 2) {
                         if (color == kol1 || color == kol2) {
@@ -1333,28 +1321,26 @@ function wmeroadhistoryLOOP()
         updatestatsdelay--;
         if (updatestatsdelay == 0) showstatsdelayed();
     }
-    
+
     //--------- aktualizacja liczby przeskanowanych segmentów i zmian ---------
-    if (scanned_segments     != scanned_segments_prev || added_changes != added_changes_prev) {
+    if (scanned_segments != scanned_segments_prev || added_changes != added_changes_prev) {
         scanned_segments_prev = scanned_segments;
-        added_changes_prev  = added_changes;
+        added_changes_prev = added_changes;
         updateCountTime();
     }
-    
+
     //--------- przywrócenie pozycji sidebar, która resetuje się po zaznaczeniu segmentu --------
-    if (getId('wmeroadhistory_scanarea').onclick == null) {
+    if (getId('wmeroadhistory_scanarea').onclick == null)
         getId('wmeroadhistory_list').innerHTML = '<p class=wmeroadhistory_amonly>' + lang.amonly + '</p>';
-    }
+
     var scanarea      = getId('wmeroadhistory_scanarea');
     var tab           = getId('wmeroadhistory_tab');
     var sidebar       = getId('sidebar');
     var userinfoDisp  = getId('user-info').style.display;
     if (tab.className == 'active') {
         if (userinfoDisp == 'block') {
-            if (userinfoDisp != userinfoDispPrev) {
+            if (userinfoDisp != userinfoDispPrev)
                 sidebar.scrollTop = prevScroll;
-                //alert('sidebar restore');
-            }
             prevScroll = sidebar.scrollTop;
         }
         userinfoDispPrev = userinfoDisp;
@@ -1362,18 +1348,18 @@ function wmeroadhistoryLOOP()
 
     //-------- inicjalizacja warstwy na której będą pokazywane markery --------
     create_markers_layer();
-    
+
     //-------- główna procedura skacząca po mapie -----------------------------
     if (rec) {
 
         //oczekiwanie na gotowość mapy za pomocą badania przycisku hidden lub zdarzeń vent
         //nie wiadomo, która z tych metod jest lepsza i stabilniejsza w praktyce
         //metoda vent zostaje, teoretycznie powinna być tą najlepszą
-        
+
         var ready = (ventCount==0);                                                       // metoda vent
         //var ready = (wazepending.className.indexOf("hidden") >= 0);                     // metoda hidden
         //var ready = (wazepending.className.indexOf("hidden") >= 0) && (ventCount==0);   // połączenie dwóch metod
-        
+
         if (ready) {
 
             var WM   = window.W.map;
@@ -1386,7 +1372,7 @@ function wmeroadhistoryLOOP()
                 //zakładka 30px niepotrzebna segmenty na obrzeżach okna ładowane są i tak z pewnym marginesem
                 //W -= 30;
                 //H -= 30;
-                
+
                 var cent = WM.getCenter();
 
                 var scanprocenty = (cent.lat - rec_xy1.lat) / (rec_xy2.lat - rec_xy1.lat);
@@ -1395,7 +1381,7 @@ function wmeroadhistoryLOOP()
                 if (scanprocenty > 1) scanprocenty = 1;
                 if (scanprocentx < 0) scanprocentx = 0;
                 if (scanprocentx > 1) scanprocentx = 1;
-                
+
                 var proc = scanprocenty;
                 if (rec_direction == 1) proc += scanprocentyDelta * scanprocentx;
                 if (rec_direction == 3) proc += scanprocentyDelta * (1 - scanprocentx);
@@ -1404,18 +1390,18 @@ function wmeroadhistoryLOOP()
 
                 if (scanprocenty > scanprocentyPrev) {
                     scanprocentyDelta = scanprocenty - scanprocentyPrev;
-                    scanprocentyPrev  = scanprocenty;
+                    scanprocentyPrev = scanprocenty;
                 }
-                
+
                 scanproc = '&nbsp;&nbsp;&nbsp;' + precFloat(proc * 100, 1) + '%';
-                
+
                 var wsp = new OL.LonLat(cent.lon, cent.lat).transform(epsg900913, epsg4326);
                 var log = 'WME Road History LOG: ' + precFloat(proc * 100, 1) + '% segs: ' + scanned_segments + ' cent: ' + precFloat(wsp.lon, 8) + ',' + precFloat(wsp.lat, 8) + ' zoom: ' + zoom + ' window: ' + W + ' ' + H;
                 console.log(log);
 
                 SCAN_SEGMENTS();
 
-               
+
                 if (rec_direction == 1 && cent.lon > rec_xy2.lon) rec_direction = 2;
                 if (rec_direction == 3 && cent.lon < rec_xy1.lon) rec_direction = 4;
 
@@ -1424,7 +1410,7 @@ function wmeroadhistoryLOOP()
                 //możliwe, że występuje tylko wtedy, gdy mapa na serwerze jest w trakcie aktualizacji
                 //rozwiązaniem od strony użytkownika jest zmniejszenie okna mapy, restart przeglądarki i ponowne uruchomienie skanowania
                 //bądź wystarczy delikatne zmienić obszar skanowania o kilka pikseli
-                
+
                 //skok mapy za pomocą WM.setCenter
                 //var e1 = new OL.Geometry.Point(0, 0);
                 //var e2 = new OL.Geometry.Point(W, H);
@@ -1451,7 +1437,7 @@ function wmeroadhistoryLOOP()
                 if (cent.lon > rec_xy2.lon && cent.lat < rec_xy2.lat) {
                     stopRec(true);
                     LastTimeScan = rec_elapsed_time;
-                    
+
                     scanproc = '';
                     updateCountTime();
                 }
@@ -1461,22 +1447,20 @@ function wmeroadhistoryLOOP()
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistorySCANAREA() {
-
     var WM = window.W.map;
 
-    if (rec) {
+    if (rec)
         stopRec(false);
-    }
     else {
 
         last_LONLAT = WM.getCenter();
         last_ZOOM   = WM.getZoom();
 
-        var W = WM.getSize().w;
-        var H = WM.getSize().h;
+        let Width = WM.getSize().w;
+        let Height = WM.getSize().h;
 
-        var e1 = new OL.Geometry.Point(0, 0);
-        var e2 = new OL.Geometry.Point(W, H);
+        let e1 = new OL.Geometry.Point(0, 0);
+        let e2 = new OL.Geometry.Point(Width, Height);
 
         rec_xy1    = WM.getLonLatFromViewPortPx(e1);
         rec_xy2    = WM.getLonLatFromViewPortPx(e2);
@@ -1491,24 +1475,23 @@ function wmeroadhistorySCANAREA() {
         added_segments_prev = 0;
         added_changes = 0;
         added_changes_prev = 0;
-        scanprocentyPrev  = 0;
+        scanprocentyPrev = 0;
         scanprocentyDelta = 0;
         scanprocPrev = 0;
 
-        var tNow = new Date();
+        let tNow = new Date();
         rec_elapsed_time = tNow.getTime();
 
         rec_zoom = last_ZOOM + 1;
-        if (rec_zoom < 5)  rec_zoom = 5;
+        if (rec_zoom < 5) rec_zoom = 5;
         if (rec_zoom > 10) rec_zoom = 10;
 
         if (typeof W == 'undefined')              W = window.W;
         if (typeof W.loginManager == 'undefined') W.loginManager = window.W.loginManager;
         if (W.loginManager && W.loginManager.isLoggedIn()) {
-            thisUser = W.loginManager.user;
+            let thisUser = W.loginManager.user;
             var lev = thisUser.normalizedLevel;
             if (thisUser !== null && (lev*lev >= lev+lev+lev || thisUser.isAreaManager)) {
-
                 rec = true;
                 WM.zoomTo(rec_zoom);
                 WM.panTo(rec_xy1);
@@ -1528,10 +1511,10 @@ function createLink(segx, segy, zoom, idsegments) {
 
     var docurl = document.URL;
     var docurlparams = docurl.split('&');
-    
+
     var layers = '';
     var link = '';
-    for(var i=0; i<docurlparams.length; i++) {
+    for(let i=0; i<docurlparams.length; i++) {
         if (docurlparams[i].indexOf( 'waze.com' ) >= 0) link   = docurlparams[i];
         if (docurlparams[i].indexOf( 'layers' )   >= 0) layers = docurlparams[i];
     }
@@ -1543,17 +1526,17 @@ function createLink(segx, segy, zoom, idsegments) {
     if (layers != '') link += '&' + layers;
     link += '&zoom=' + zoom;
     link += '&segments=' + idsegments;
-    
+
     return link;
 }
 //--------------------------------------------------------------------------------------------------------
 function gotoSEG(x, y, segid) {
     var WM = window.W.map;
     var xy = new OL.LonLat( x, y );
-    
+
     WM.panTo(xy);
     WM.zoomTo(6);
-    
+
     showturn[0] = showturn[2];
     showturn[1] = showturn[3];
     showturn[2] = segid;
@@ -1562,7 +1545,7 @@ function gotoSEG(x, y, segid) {
 //--------------------------------------------------------------------------------------------------------
 function gotoTURN(event) {
     var WM = window.W.map;
-    
+
     var segs = event.target.id.split('_');
     var seg1 = parseInt( segs[1] );
     var segN = segs[2];
@@ -1573,18 +1556,18 @@ function gotoTURN(event) {
     request.onsuccess = function() {
         var rekord = request.result;
         if(rekord) {
-            
+
             if (rekord.P.length >= 2) {
                 if (segN == 'A') {
-                    var x = rekord.P[ 0 ];
-                    var y = rekord.P[ 1 ];
+                    let x = rekord.P[ 0 ];
+                    let y = rekord.P[ 1 ];
                 }
                 else {
-                    var x = rekord.P[ rekord.P.length - 2 ];
-                    var y = rekord.P[ rekord.P.length - 1 ];
+                    let x = rekord.P[ rekord.P.length - 2 ];
+                    let y = rekord.P[ rekord.P.length - 1 ];
                 }
                 var xy = new OL.LonLat( x, y );
-                
+
                 showturn[0] = showturn[2];
                 showturn[1] = showturn[3];
                 showturn[2] = seg1;
@@ -1593,14 +1576,14 @@ function gotoTURN(event) {
                 WM.panTo(xy);
                 WM.zoomTo(6);
             }
-            
+
         }
     }
-    
+
 }
 //--------------------------------------------------------------------------------------------------------
 function foundPELinkName( pe, seg2 ) {
-    
+
     var objectStore = wazeDB.transaction('segments', 'readonly').objectStore('segments');
     var request = objectStore.get( seg2 );
     request.onsuccess = function() {
@@ -1614,16 +1597,16 @@ function foundPELinkName( pe, seg2 ) {
 //--------------------------------------------------------------------------------------------------------
 function formatRestriction(str, bs, be) {
     var items = str.split('·');
-    
+
     var li = document.createElement('p');
-    
-    if (items[4]=='') li.innerHTML += bs +  lang.allweek                                                         + be + '<br>';
-    else              li.innerHTML += bs +  items[4] + ' <span style="font-weight:normal">..</span> ' + items[6] + be + '<br>';  
-    
+
+    if (items[4]=='') li.innerHTML += bs + lang.allweek                                                         + be + '<br>';
+    else              li.innerHTML += bs + items[4] + ' <span style="font-weight:normal">..</span> ' + items[6] + be + '<br>';  
+
     if (items[0] == 0) li.innerHTML += bs + items[5] + ' - ' + items[7] + be + '<br>';
-    
+
     if (items[1] != 127) {
-        var html = bs;
+        let html = bs;
         if (items[1] & 0x01) { if (html!='') html+=' · '; html += lang.day1; }
         if (items[1] & 0x02) { if (html!='') html+=' · '; html += lang.day2; }
         if (items[1] & 0x04) { if (html!='') html+=' · '; html += lang.day3; }
@@ -1635,10 +1618,10 @@ function formatRestriction(str, bs, be) {
         li.innerHTML += html;
     }
     if (items[2]!='') li.innerHTML += '<i>&quot;' + htmlEntities(items[2]) + '&quot;</i><br>';
-    
+
     if (items[8] != '-1') {
         li.innerHTML += lang.exceptvehicles + '<br>';
-        var html = bs;
+        let html = bs;
         if ((items[8] & 0x01)==0)  html += '- ' + lang.veh1  + '<br>';
         if ((items[8] & 0x02)==0)  html += '- ' + lang.veh2  + '<br>';
         if ((items[8] & 0x04)==0)  html += '- ' + lang.veh3  + '<br>';
@@ -1653,26 +1636,26 @@ function formatRestriction(str, bs, be) {
         html += be;
         li.innerHTML += html;
     }
-    
+
     return li;
 }
 //--------------------------------------------------------------------------------------------------------
 function create_markers_layer() {
-    
+
     var WM = window.W.map;
-	var OL = window.OpenLayers;
-    
+    var OL = window.OL;
+
     var mlayers = WM.getLayersBy("uniqueName","__WMERoadHistoryMarkers");
     if (mlayers.length == 0) {
-
+        let drc_mapLayer;
         //----------wersja z ikonkami jest bardzo wolna, pokazanie na mapie 1000 ikonek spowalnia mocno rendering
         if (ICONMODE == 1) {
-            var drc_mapLayer = new OL.Layer.Markers("WME Road History", {
+            drc_mapLayer = new OL.Layer.Markers("WME Road History", {
                 displayInLayerSwitcher: true,
                 uniqueName: "__WMERoadHistoryMarkers"
             });
         }
-        
+
         //----------wersja z liniami lepsza i szybsza w renderingu
         if (ICONMODE == 0) {
             var drc_style = new OL.Style({
@@ -1693,7 +1676,7 @@ function create_markers_layer() {
                 display: 'block'
             });
 
-            var drc_mapLayer = new OL.Layer.Vector("WME Road History", {
+            drc_mapLayer = new OL.Layer.Vector("WME Road History", {
                 displayInLayerSwitcher: true,
                 styleMap: new OL.StyleMap(drc_style),
                 uniqueName: "__WMERoadHistoryMarkers"
@@ -1708,23 +1691,21 @@ function create_markers_layer() {
 }
 //--------------------------------------------------------------------------------------------------------
 function remove_markers() {
-    
+
     var WM = window.W.map;
-	var OL = window.OpenLayers;
-    
+    var OL = window.OL;
+
     markerskey = {};
     markersseg = {};
     markersadd = [];
-    
+
     var mlayers = WM.getLayersBy("uniqueName","__WMERoadHistoryMarkers");
     var markerLayer = mlayers[0];
     if (markerLayer) {
-        if (ICONMODE) {
+        if (ICONMODE)
             markerLayer.clearMarkers();
-        }
-        else {
+        else
             markerLayer.removeAllFeatures();
-        }
     }
 }
 //--------------------------------------------------------------------------------------------------------
@@ -1736,39 +1717,37 @@ function add_markers_from_list() {
 
     //jeżeli nie zaznaczono żadnej z opcji kolorowania to powrót
     if (!showcircle && !showcircleshort && !showcirclelong) return;
-    
-	// przygotowanie danych warstwy '__WMERoadHistoryMarkers'
-    var WM = window.W.map;
-	var OL = window.OpenLayers;
 
-	var mlayers = WM.getLayersBy("uniqueName","__WMERoadHistoryMarkers");
-	var markerLayer = mlayers[0];
+    // przygotowanie danych warstwy '__WMERoadHistoryMarkers'
+    var WM = window.W.map;
+    var OL = window.OL;
+
+    var mlayers = WM.getLayersBy("uniqueName","__WMERoadHistoryMarkers");
+    var markerLayer = mlayers[0];
     if (markerLayer == undefined) return;
 
-	var lineFeatures  = [];
-    
+    var lineFeatures  = [];
+
     while (markersadd.length) {
-        
+
         var mark  = markersadd.shift();
         var x     = mark.x;
         var y     = mark.y;
         var ed    = mark.editor;
         var key   = mark.key;
         var segid = mark.segid;
-        
+
         if (markerskey[key] == 1) continue;
         markerskey[key] = 1;
 
         if (ShowHistMode == 1) {
-            if (markersseg[segid] == undefined) {
+            if (markersseg[segid] == undefined)
                 markersseg[segid] = 0;
-            }
-            else {
+            else
                 markersseg[segid] = markersseg[segid] + 1;
-            }
             x += markersseg[segid] * 4;
         }
-        
+
         var edT = '#808080';
         var edL = '#808080';
 
@@ -1778,14 +1757,16 @@ function add_markers_from_list() {
         if (ed.indexOf('(4)') >= 0)   { edT = '#0080FF'; edL = '#0080FF'; }
         if (ed.indexOf('(5)') >= 0)   { edT = '#FF00FF'; edL = '#FF00FF'; }
         if (ed == 'Inactive User(1)') { edT = '#808080'; edL = '#808080'; ed = 'I'; }
-        
+
         if (showcirclelong) {}
-        else if (showcircleshort) ed = ed.substr(0, 3);
-        else { ed = ''; }
-        
+        else if (showcircleshort)
+            ed = ed.substr(0, 3);
+        else
+            ed = '';
+
         var width = 0;
         if (showcircle) width = 30;
-        
+
         if (ICONMODE) {
             var di = require("Waze/DivIcon");
             var iconA = new di("wmeroadhistorymarker1");
@@ -1808,10 +1789,8 @@ function add_markers_from_list() {
         }
     }
 
-    if (!ICONMODE) {
+    if (!ICONMODE)
         markerLayer.addFeatures(lineFeatures);
-    }
-
 }
 //--------------------------------------------------------------------------------------------------------
 function showEdits(histmode, fromPage) {
@@ -1819,11 +1798,11 @@ function showEdits(histmode, fromPage) {
     var objlist = getId('wmeroadhistory_list');
     if (objlist == null) return;
 
-    var range, transaction, store, index, lower, upper;
-    
-    var lower = 0;
-    var upper = 9999999999;
-    
+    var range, transaction, store, index;
+
+    let lower = 0;
+    let upper = 9999999999;
+
     if (getId('_wmeRoadHistoryDateRange').checked) {
 
         var fyear  = parseInt(getId('_wmeRoadHistoryFromYear').value);
@@ -1834,11 +1813,11 @@ function showEdits(histmode, fromPage) {
         var tmonth = parseInt(getId('_wmeRoadHistoryToMonth').value) - 1;
         var tday   = parseInt(getId('_wmeRoadHistoryToDay').value);
 
-        var lowerdate = new Date(fyear, fmonth, fday, 0,   0,  0,   0);
+        var lowerdate = new Date(fyear, fmonth, fday, 0, 0, 0, 0);
         var upperdate = new Date(tyear, tmonth, tday, 23, 59, 59, 999);
 
-        var lower = parseInt(lowerdate.getTime() / 1000);
-        var upper = parseInt(upperdate.getTime() / 1000);
+        lower = parseInt(lowerdate.getTime() / 1000);
+        upper = parseInt(upperdate.getTime() / 1000);
 
         if (lower <= upper) {
             getId('wmeroadhistory_rangeinfo').innerHTML = lang.datesdefined + ' &nbsp; ' + lowerdate.toLocaleDateString() + ' - ' + upperdate.toLocaleDateString();
@@ -1848,13 +1827,10 @@ function showEdits(histmode, fromPage) {
             return;
         }
     }
-    else {
+    else
         getId('wmeroadhistory_rangeinfo').innerHTML = '';
-    }
 
-    
     var showseconds = getId('_wmeRoadHistoryFullTime').checked;
-    
     updatestatsdelay = 0;
     while (markersadd.length) markersadd.pop();
 
@@ -1874,25 +1850,25 @@ function showEdits(histmode, fromPage) {
     var count = 0;
     var page = 0;
     var end = 0;
-    
+
     var rows = getId('_wmeRoadHistoryRows').value;
     if (rows < 5)    rows = 5;
     if (rows > 1000) rows = 1000;
 
     var t = new Date();
     var curtime = parseInt( t.getTime() / 1000);
-    
+
     index.openCursor(range, "prev").onsuccess = function(event) {
         var cursor = event.target.result;
         if (cursor) {
 
             if (page < fromPage) {
-                
+
                 page++;
                 cursor.advance( rows );
             }
             else if (count < rows) {
-                
+
                 var segid     = cursor.value.ID;
                 var segtime   = cursor.value.T;
                 var segeditor = cursor.value.E;
@@ -1910,27 +1886,26 @@ function showEdits(histmode, fromPage) {
                 var h5 = document.createElement('h5');
                 var h6 = document.createElement('h6');
                 var hr = document.createElement('hr');
-                
+
                 if (stats[segeditor] == null) {
                     var list = {};
                     list[ segid + '.' + segtime ] = 1;
                     stats[segeditor] = list;
                 }
-                else {
+                else
                     stats[segeditor][segid + '.' + segtime] = 1;
-                }
 
                 //----- dodanie wsp. markera do tablicy ----------
                 var mark = { x:segx, y:segy, editor:segeditor, key:cursor.primaryKey, segid:segid };
                 markersadd.push( mark );
-                
+
                 if (histmode == 1) {
 
 
                     if (cursor.value.drA != null && cursor.value.drB != null) {
-                        
-                        var li = document.createElement('li');
-                        
+
+                        let li = document.createElement('li');
+
                         if (cursor.value.drA == 0)     li.innerHTML = lang.dirchangeadd;
 
                         if (cursor.value.drA == 1) {
@@ -1950,7 +1925,7 @@ function showEdits(histmode, fromPage) {
                             if (cursor.value.drB == 1) li.innerHTML = lang.dirchange1;
                             if (cursor.value.drB == 2) li.innerHTML = lang.dirchange1;
                         }
-                        
+
                         ul.appendChild(li);
                     }
 
@@ -1958,10 +1933,10 @@ function showEdits(histmode, fromPage) {
                     var tyA = cursor.value.tyA;
                     var tyB = cursor.value.tyB;
                     if (tyA != null && tyB != null) {
-                        
-                        var li = document.createElement('li');
-                        
-                        var html = '';
+
+                        let li = document.createElement('li');
+
+                        let html = '';
 
                         switch (tyA) {
                             case 1:  html += lang.road1;  break;
@@ -1979,9 +1954,9 @@ function showEdits(histmode, fromPage) {
                             case 20: html += lang.road20; break;
                             default: html += lang.roadtype + tyA + ')'; break;
                         }
-                        
+
                         html += ' » <b class=wmeroadhistory_kind >';
-                        
+
                         switch (tyB) {
                             case 1:  html += lang.road1;  break;
                             case 2:  html += lang.road2;  break;
@@ -2005,28 +1980,27 @@ function showEdits(histmode, fromPage) {
                         ul.appendChild(li);
                     }
 
-                    
-                    
-                    var arA       = cursor.value.arA;
-                    var arB       = cursor.value.arB;
-                    if (arA != null && arB != null) {
 
+
+                    var arA = cursor.value.arA;
+                    var arB = cursor.value.arB;
+                    if (arA != null && arB != null) {
                         var turnsA = arA.split('·');
                         var turnsB = arB.split('·');
 
-                        for(var i=0; i<turnsA.length - 1; i++) {
+                        for(let i=0; i<turnsA.length - 1; i++) {
                             var p = arB.indexOf( turnsA[i] + '·' );
                             if (p < 0) {
 
-                                var seg1 = segid;
-                                var segN = turnsA[i].substr(0,1);
-                                var seg2 = turnsA[i].substr(1,12);
+                                let seg1 = segid;
+                                let segN = turnsA[i].substr(0,1);
+                                let seg2 = turnsA[i].substr(1,12);
 
-                                var li = document.createElement('li');
+                                let li = document.createElement('li');
                                 if (seg1 == seg2) li.innerHTML += '<b class=wmeroadhistory_uturn >' + lang.removed_uturn + '</b>';
-                                else              li.innerHTML += '<b class=wmeroadhistory_error >' + lang.removedturn + '</b>'; 
+                                else              li.innerHTML += '<b class=wmeroadhistory_error >' + lang.removedturn + '</b>';
 
-                                var pe = document.createElement('p');
+                                let pe = document.createElement('p');
                                 pe.innerHTML = 'link';
                                 pe.className = 'wmeroadhistory_turnlink';
                                 pe.id = 'turnlink_' + seg1 + '_' + segN + '_' + seg2;
@@ -2042,19 +2016,19 @@ function showEdits(histmode, fromPage) {
                             }
                         }
 
-                        for(var i=0; i<turnsB.length - 1; i++) {
-                            var p = arA.indexOf( turnsB[i] + '·' );
+                        for(let i=0; i<turnsB.length - 1; i++) {
+                            let p = arA.indexOf( turnsB[i] + '·' );
                             if (p < 0) {
 
-                                var seg1 = segid;
-                                var segN = turnsB[i].substr(0,1);
-                                var seg2 = turnsB[i].substr(1,12);
+                                let seg1 = segid;
+                                let segN = turnsB[i].substr(0,1);
+                                let seg2 = turnsB[i].substr(1,12);
 
                                 var li = document.createElement('li');
                                 if (seg1 == seg2) li.innerHTML += '<b class=wmeroadhistory_uturn >' + lang.added_uturn + '</b>';
                                 else              li.innerHTML += '<b class=wmeroadhistory_error >' + lang.addedturn + '</b>';
-                                
-                                var pe = document.createElement('p');
+
+                                let pe = document.createElement('p');
                                 pe.innerHTML = 'link';
                                 pe.className = 'wmeroadhistory_turnlink';
                                 pe.id = 'turnlink_' + seg1 + '_' + segN + '_' + seg2;
@@ -2071,39 +2045,39 @@ function showEdits(histmode, fromPage) {
                         }
                     }
 
-                   
+
                     if (cursor.value.naA != null && cursor.value.naB != null) {
-                        var li = document.createElement('li');
+                        let li = document.createElement('li');
                         li.innerHTML = lang.changename + cursor.value.naA + ' » ' + cursor.value.naB;
                         ul.appendChild(li);
                     }
 
                     if (cursor.value.ciA != null && cursor.value.ciB != null) {
-                        var li = document.createElement('li');
+                        let li = document.createElement('li');
                         li.innerHTML = lang.changecity + cursor.value.ciA + ' » ' + cursor.value.ciB;
                         ul.appendChild(li);
                     }
 
                     if (cursor.value.geA != null && cursor.value.geB != null) {
-                        var li = document.createElement('li');
+                        let li = document.createElement('li');
                         li.innerHTML = lang.changedgeom;
                         ul.appendChild(li);
                     }
 
                     if (cursor.value.lvA != null && cursor.value.lvB != null) {
-                        var li = document.createElement('li');
+                        let li = document.createElement('li');
                         li.innerHTML = lang.level + cursor.value.lvA + ' » ' + cursor.value.lvB;
                         ul.appendChild(li);
                     }
 
                     if (cursor.value.tolA != null && cursor.value.tolB != null) {
-                        var li = document.createElement('li');
+                        let li = document.createElement('li');
 
                         if (cursor.value.tolA == 0) li.innerHTML += lang.tollfree;
                         if (cursor.value.tolA == 1) li.innerHTML += lang.tollpart;
                         if (cursor.value.tolA == 2) li.innerHTML += lang.tollpart;
                         if (cursor.value.tolA == 3) li.innerHTML += lang.toll;
-                        
+
                         if (cursor.value.tolB == 0) li.innerHTML += ' » <b class=wmeroadhistory_toll>' + lang.tollfree + '</b>';
                         if (cursor.value.tolB == 1) li.innerHTML += ' » <b class=wmeroadhistory_toll>' + lang.tollpart + '</b>';
                         if (cursor.value.tolB == 2) li.innerHTML += ' » <b class=wmeroadhistory_toll>' + lang.tollpart + '</b>';
@@ -2111,51 +2085,51 @@ function showEdits(histmode, fromPage) {
 
                         ul.appendChild(li);
                     }
-                    
+
                     var trBefore = cursor.value.trA;
                     var trAfter  = cursor.value.trB;
                     if (trBefore != null && trAfter != null) {
 
                         var before = trBefore.split('²');
                         var after  = trAfter.split('²');
-                        
+
                         var abBefore = '';
                         var abAfter  = '';
                         var baBefore = '';
                         var baAfter  = '';
-                        
-                        for(var i=0; i<before.length - 1; i++) {
+
+                        for(let i=0; i<before.length - 1; i++) {
                             if (before[i].indexOf('AB¹') == 0) abBefore = before[i];
                             if (before[i].indexOf('BA¹') == 0) baBefore = before[i];
                         }
 
-                        for(var i=0; i<after.length - 1; i++) {
+                        for(let i=0; i<after.length - 1; i++) {
                             if (after[i].indexOf('AB¹') == 0) abAfter = after[i];
                             if (after[i].indexOf('BA¹') == 0) baAfter = after[i];
                         }
-                        
+
                         if (abBefore != abAfter) {
 
-                            var li = document.createElement('li');
+                            let li = document.createElement('li');
                             li.innerHTML = '<b class=wmeroadhistory_trafter>' + lang.trAB + '</b>';
                             ul.appendChild(li);
 
                             if (abAfter == '') {
-                                var li = document.createElement('p');
+                                let li = document.createElement('p');
                                 li.innerHTML = '<b class=wmeroadhistory_trafter>' + lang.none + '</b>';
                                 ul.appendChild(li);
                             }
                             else {
                                 var lines = abAfter.split('¹');
-                                for(var i=1; i<lines.length-1; i++) {
-                                    var li = formatRestriction( lines[i], '<b class=wmeroadhistory_trafter>', '</b>');
+                                for(let i=1; i<lines.length-1; i++) {
+                                    let li = formatRestriction( lines[i], '<b class=wmeroadhistory_trafter>', '</b>');
                                     ul.appendChild(li);
                                 }
                             }
 
                             var lines = abBefore.split('¹');
-                            for(var i=1; i<lines.length-1; i++) {
-                                var li = formatRestriction( lines[i], '', '');
+                            for(let i=1; i<lines.length-1; i++) {
+                                let li = formatRestriction( lines[i], '', '');
                                 li.className = 'wmeroadhistory_trbefore';
                                 ul.appendChild(li);
                             }
@@ -2163,26 +2137,26 @@ function showEdits(histmode, fromPage) {
 
                         if (baBefore != baAfter) {
 
-                            var li = document.createElement('li');
+                            let li = document.createElement('li');
                             li.innerHTML = '<b class=wmeroadhistory_trafter>' + lang.trBA + '</b>';
                             ul.appendChild(li);
 
                             if (baAfter == '') {
-                                var li = document.createElement('p');
+                                let li = document.createElement('p');
                                 li.innerHTML = '<b class=wmeroadhistory_trafter>' + lang.none + '</b>';
                                 ul.appendChild(li);
                             }
                             else {
-                                var lines = baAfter.split('¹');
-                                for(var i=1; i<lines.length-1; i++) {
-                                    var li = formatRestriction( lines[i], '<b class=wmeroadhistory_trafter>', '</b>');
+                                let lines = baAfter.split('¹');
+                                for(let i=1; i<lines.length-1; i++) {
+                                    let li = formatRestriction( lines[i], '<b class=wmeroadhistory_trafter>', '</b>');
                                     ul.appendChild(li);
                                 }
                             }
 
-                            var lines = baBefore.split('¹');
-                            for(var i=1; i<lines.length-1; i++) {
-                                var li = formatRestriction( lines[i], '', '');
+                            let lines = baBefore.split('¹');
+                            for(let i=1; i<lines.length-1; i++) {
+                                let li = formatRestriction( lines[i], '', '');
                                 li.className = 'wmeroadhistory_trbefore';
                                 ul.appendChild(li);
                             }
@@ -2191,37 +2165,34 @@ function showEdits(histmode, fromPage) {
 
                     }
 
-                    
-                    
-                    
+
                     var trBefore = cursor.value.tsA;
                     var trAfter  = cursor.value.tsB;
                     if (trBefore != null && trAfter != null) {
-                        var before = trBefore.split('²');
-                        var after  = trAfter.split('²');
-                        
-                        for(var i=0; i<before.length - 1; i++) {
-                            var bi = before[i].split('¹');
-                            
+                        let before = trBefore.split('²');
+                        let after  = trAfter.split('²');
+
+                        for(let i=0; i<before.length - 1; i++) {
+                            let bi = before[i].split('¹');
+
                             var aifound = [];
 
-                            for(var j=0; j<after.length - 1; j++) {
-                                var ai = after[j].split('¹');
+                            for(let j=0; j<after.length - 1; j++) {
+                                let ai = after[j].split('¹');
                                 if (ai[0] == bi[0]) {
                                     aifound = ai;
                                 }
                             }
-                            
+
                             if (aifound.length > 2) {
-                                
-                                var li = document.createElement('li');
+                                let li = document.createElement('li');
                                 li.innerHTML = '<b class=wmeroadhistory_trturn>' + lang.changedtr + '</b>';
 
-                                var seg1 = segid;
-                                var segN = bi[0].substr(0,1);
-                                var seg2 = bi[0].substr(1,12);
+                                let seg1 = segid;
+                                let segN = bi[0].substr(0,1);
+                                let seg2 = bi[0].substr(1,12);
 
-                                var pe = document.createElement('p');
+                                let pe = document.createElement('p');
                                 pe.innerHTML = 'link';
                                 pe.className = 'wmeroadhistory_turnlink';
                                 pe.id = 'turnlink_' + seg1 + '_' + segN + '_' + seg2;
@@ -2233,33 +2204,33 @@ function showEdits(histmode, fromPage) {
                                 });
                                 li.appendChild(pe);
                                 ul.appendChild(li);
-                                
+
                                 if (aifound.length <= 2) {
-                                    var li = document.createElement('p');
+                                    let li = document.createElement('p');
                                     li.innerHTML = '<b class=wmeroadhistory_trturn>' + lang.none + '</b>';
                                     ul.appendChild(li);
                                 }
                                 else {
-                                    for(var k=1; k<aifound.length-1; k++) {
-                                        var li = formatRestriction( aifound[k], '<b class=wmeroadhistory_trturn>', '</b>');
+                                    for(let k=1; k<aifound.length-1; k++) {
+                                        let li = formatRestriction( aifound[k], '<b class=wmeroadhistory_trturn>', '</b>');
                                         ul.appendChild(li);
                                     }
                                 }
 
-                                for(var k=1; k<bi.length-1; k++) {
-                                    var li = formatRestriction( bi[k], '', '');
+                                for(let k=1; k<bi.length-1; k++) {
+                                    let li = formatRestriction( bi[k], '', '');
                                     ul.appendChild(li);
                                 }
                             }
                             else {
-                                var li = document.createElement('li');
+                                let li = document.createElement('li');
                                 li.innerHTML = '<b class=wmeroadhistory_trturn>' + lang.removedtr + '</b>';
 
-                                var seg1 = segid;
-                                var segN = bi[0].substr(0,1);
-                                var seg2 = bi[0].substr(1,12);
+                                let seg1 = segid;
+                                let segN = bi[0].substr(0,1);
+                                let seg2 = bi[0].substr(1,12);
 
-                                var pe = document.createElement('p');
+                                let pe = document.createElement('p');
                                 pe.innerHTML = 'link';
                                 pe.className = 'wmeroadhistory_turnlink';
                                 pe.id = 'turnlink_' + seg1 + '_' + segN + '_' + seg2;
@@ -2276,25 +2247,25 @@ function showEdits(histmode, fromPage) {
                                 //li.innerHTML = '<b class=wmeroadhistory_trturn>' + lang.none + '</b>';
                                 //ul.appendChild(li);
 
-                                for(var k=1; k<bi.length-1; k++) {
-                                    var li = formatRestriction( bi[k], '', '');
+                                for(let k=1; k<bi.length-1; k++) {
+                                    let li = formatRestriction( bi[k], '', '');
                                     ul.appendChild(li);
                                 }
                             }
                         }
 
 
-                        for(var i=0; i<after.length - 1; i++) {
-                            var ai = after[i].split('¹');
-                            
-                            var p = trBefore.indexOf( ai[0] + '¹' );
+                        for(let i=0; i<after.length - 1; i++) {
+                            let ai = after[i].split('¹');
+
+                            let p = trBefore.indexOf( ai[0] + '¹' );
                             if (p < 0) {
-                                var li = document.createElement('li');
+                                let li = document.createElement('li');
                                 li.innerHTML = '<b class=wmeroadhistory_trturn>' + lang.addedtr + '</b>';
 
-                                var seg1 = segid;
-                                var segN = ai[0].substr(0,1);
-                                var seg2 = ai[0].substr(1,12);
+                                let seg1 = segid;
+                                let segN = ai[0].substr(0,1);
+                                let seg2 = ai[0].substr(1,12);
 
                                 var pe = document.createElement('p');
                                 pe.innerHTML = 'link';
@@ -2309,15 +2280,15 @@ function showEdits(histmode, fromPage) {
                                 li.appendChild(pe);
                                 ul.appendChild(li);
 
-                                for(var k=1; k<ai.length-1; k++) {
-                                    var li = formatRestriction( ai[k], '<b class=wmeroadhistory_trturn>', '</b>');
+                                for(let k=1; k<ai.length-1; k++) {
+                                    let li = formatRestriction( ai[k], '<b class=wmeroadhistory_trturn>', '</b>');
                                     ul.appendChild(li);
                                 }
                             }
                         }
                     }
 
-                    
+
 
                 }
 
@@ -2325,8 +2296,8 @@ function showEdits(histmode, fromPage) {
                 t.setTime( segtime * 1000 );
                 var topt = { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" };
                 var czas;
-                if (showseconds)  czas = t.toLocaleString(lang.code);
-                else              czas = t.toLocaleDateString(lang.code, topt);
+                if (showseconds) czas = t.toLocaleString(lang.code);
+                else             czas = t.toLocaleDateString(lang.code, topt);
 
 
                 if (segnames == '') h1.innerHTML = '<b>' + lang.noname + '</b>';
@@ -2335,7 +2306,7 @@ function showEdits(histmode, fromPage) {
                 h1.onclick = (function() {
                     gotoSEG(segx, segy, segid);
                 });
-                
+
                 if      (segkind == 1)   h1.style.color = '#488193';  // street
                 else if (segkind == 2)   h1.style.color = '#488193';  // primary street
                 else if (segkind == 3)   h1.style.color = '#488193';  // freeways
@@ -2361,13 +2332,13 @@ function showEdits(histmode, fromPage) {
                 if (segeditor.indexOf('(4)') >= 0)           h6.className = 'wmeroadhistory_rank4';
                 if (segeditor.indexOf('(5)') >= 0)           h6.className = 'wmeroadhistory_rank5';
                 if (segeditor.indexOf('Inactive User') >= 0) h6.className = 'wmeroadhistory_rank0';
-                
+
 
                 if (count < objlist.childNodes.length) {
                     var div = objlist.childNodes[count];
-                    
+
                     div.innerHTML = '';
-                    
+
                     div.appendChild(h1);
                     div.appendChild(h4);
                     div.appendChild(h2);
@@ -2389,12 +2360,12 @@ function showEdits(histmode, fromPage) {
 
                     objlist.appendChild(newdiv);
                 }
-                
+
                 count++;
                 cursor.continue();
             }
             else {
-                
+
                 add_markers_from_list();
                 updatestatsdelay = parseInt(2000 / LOOPTIMER);
             }
@@ -2405,8 +2376,8 @@ function showEdits(histmode, fromPage) {
 
             //korekta pozycji na ostatniej stronie, gdy list jest mniejsza niż zdefiniowana ilość wierszy
             if (count && count < rows) {
-                for(var i=count; i<rows; i++) {
-                    var div = objlist.childNodes[i];
+                for(let i=count; i<rows; i++) {
+                    let div = objlist.childNodes[i];
                     div.innerHTML = '';
                 }
             }
@@ -2420,23 +2391,23 @@ function showEdits(histmode, fromPage) {
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryTAB1() {
-    
+
     ShowHistMode = 1;
     updateTabs();
-    
+
     //reset zaznaczonych segmentów
     showturn[0] = showturn[2];
     showturn[1] = showturn[3];
     showturn[2] = 0;
     showturn[3] = 0;
-    
-    
+
+
     //usunięcie,czyszczenie markerów z mapy
     remove_markers();
 
     //reset statystyk po kliknięciu w zakładkę, aby można było podliczać od nowa poruszając się po stronach
     reset_statistics();
-    
+
     getId('wmeroadhistory_list').innerHTML = '';
     getId('wmeroadhistory_list').style.display = 'block';
     getId('wmeroadhistory_options').style.display = 'none';
@@ -2459,14 +2430,14 @@ function wmeroadhistoryTAB2() {
     showturn[1] = showturn[3];
     showturn[2] = 0;
     showturn[3] = 0;
-    
-    
+
+
     //usunięcie,czyszczenie markerów z mapy
     remove_markers();
-    
+
     //reset statystyk po kliknięciu w zakładkę, aby można było podliczać od nowa poruszając się po stronach
     reset_statistics();
-    
+
     getId('wmeroadhistory_list').innerHTML = '';
     getId('wmeroadhistory_list').style.display = 'block';
     getId('wmeroadhistory_options').style.display = 'none';
@@ -2480,7 +2451,7 @@ function wmeroadhistoryTAB2() {
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryTAB3() {
-    
+
     ShowHistMode = 3;
     updateTabs();
 
@@ -2510,7 +2481,6 @@ function wmeroadhistoryTAB3() {
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryPREV() {
-    
     if (pageEdits) {
         pageEdits--;
         if (pageEdits < 0) pageEdits = 0;
@@ -2519,13 +2489,11 @@ function wmeroadhistoryPREV() {
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryNEXT() {
-
     pageEdits++;
     showEdits(ShowHistMode, pageEdits);
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryPREVDOWN() {
-    
     if (pageEdits) {
         pageEdits--;
         if (pageEdits < 0) pageEdits = 0;
@@ -2535,14 +2503,12 @@ function wmeroadhistoryPREVDOWN() {
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryNEXTDOWN() {
-
     pageEdits++;
     getId('sidebar').scrollTop = 0;
     showEdits(ShowHistMode, pageEdits);
 }
 //--------------------------------------------------------------------------------------------------------
 function updateTabs() {
-    
     if (ShowHistMode == 1) {
         getId('wmeroadhistory_tab1').className = 'wmeroadhistory_tab_active';
         getId('wmeroadhistory_tab2').className = '';
@@ -2564,31 +2530,31 @@ function importexportenable(flag) {
     if (flag) {
         getId('wmeroadhistory_import').className = 'wmerh_button_enabled';
         getId('wmeroadhistory_export').className = 'wmerh_button_enabled';
-        getId('wmeroadhistory_import').disabled  = false;
-        getId('wmeroadhistory_export').disabled  = false;
-        getId('wmeroadhistory_mergecheckbox').disabled  = false;
+        getId('wmeroadhistory_import').disabled = false;
+        getId('wmeroadhistory_export').disabled = false;
+        getId('wmeroadhistory_mergecheckbox').disabled = false;
     }
     else {
         getId('wmeroadhistory_import').className = 'wmerh_button_disabled';
         getId('wmeroadhistory_export').className = 'wmerh_button_disabled';
-        getId('wmeroadhistory_import').disabled  = true;
-        getId('wmeroadhistory_export').disabled  = true;
-        getId('wmeroadhistory_mergecheckbox').disabled  = true;
+        getId('wmeroadhistory_import').disabled = true;
+        getId('wmeroadhistory_export').disabled = true;
+        getId('wmeroadhistory_mergecheckbox').disabled = true;
     }
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryIMPORT() {
-    
+
     getId('wmeroadhistory_wrapper').innerHTML = '<input id=wmeroadhistory_fileselector type="file" name="files[]" />';
     getId('wmeroadhistory_wrapper').addEventListener('change', wmeroadhistoryFILESELECTOR, false);
-    
+
     getId('wmeroadhistory_fileselector').click();
-    
+
     reset_statistics();
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryIMPORTLOOP() {
-    
+
     var saveitems  = new Array();
     var savestores = new Array();
     var compitems  = new Array();
@@ -2616,33 +2582,32 @@ function wmeroadhistoryIMPORTLOOP() {
             if (data[0] == 'browser=chrome')  importbrowser = 1;
             if (data[0] == 'browser=firefox') importbrowser = 2;
         }
-        
+
         if (chunkdata == 1) {
-            var ID = parseInt(data[0]);
-            var T  = parseInt(data[1]);
-            var E  = data[2];
-            var D  = parseInt(data[3]);
-            var K  = parseInt(data[4]);
-            var x  = parseInt(data[5]);
-            var y  = parseInt(data[6]);
-            var N  = data[7];
-            var C  = data[8];
-            var Q  = parseInt(data[9]);
-            var A  = data[10];
-            var TR = data[11];
-            var TS = data[12];
-            var L  = parseInt(data[13]);
-            var G  = parseInt(data[14]);
-            var TL = parseInt(data[15]);
+            let ID = parseInt(data[0]);
+            let T  = parseInt(data[1]);
+            let E  = data[2];
+            let D  = parseInt(data[3]);
+            let K  = parseInt(data[4]);
+            let x  = parseInt(data[5]);
+            let y  = parseInt(data[6]);
+            let N  = data[7];
+            let C  = data[8];
+            let Q  = parseInt(data[9]);
+            let A  = data[10];
+            let TR = data[11];
+            let TS = data[12];
+            let L  = parseInt(data[13]);
+            let G  = parseInt(data[14]);
+            let TL = parseInt(data[15]);
 
             var P = new Array();
             var pstr = data[16].split(',');
-            for(var i=0; i<pstr.length; i++) {
+            for(let i=0; i<pstr.length; i++)
                 P.push ( parseInt(pstr[i]) );
-            }
 
-            var item = { ID:ID, T:T, E:E, D:D, K:K, x:x, y:y, N:N, C:C, Q:Q, A:A, TR:TR, TS:TS, L:L, G:G, TL:TL, P:P };
-            
+            let item = { ID:ID, T:T, E:E, D:D, K:K, x:x, y:y, N:N, C:C, Q:Q, A:A, TR:TR, TS:TS, L:L, G:G, TL:TL, P:P };
+
             if (getId('wmeroadhistory_mergecheckbox').checked == true) {
                 compitems.push( item );
                 compstores.push( 'segments' );
@@ -2654,18 +2619,18 @@ function wmeroadhistoryIMPORTLOOP() {
         }
 
         if (chunkdata == 2) {
-            var ID = parseInt(data[0]);
-            var T  = parseInt(data[1]);
-            var E  = data[2];
-            var D  = parseInt(data[3]);
-            var K  = parseInt(data[4]);
-            var x  = parseInt(data[5]);
-            var y  = parseInt(data[6]);
-            var N  = data[7];
-            var C  = data[8];
-            var Q  = parseInt(data[9]);
+            let ID = parseInt(data[0]);
+            let T  = parseInt(data[1]);
+            let E  = data[2];
+            let D  = parseInt(data[3]);
+            let K  = parseInt(data[4]);
+            let x  = parseInt(data[5]);
+            let y  = parseInt(data[6]);
+            let N  = data[7];
+            let C  = data[8];
+            let Q  = parseInt(data[9]);
 
-            var item = { ID:ID, T:T, E:E, D:D, K:K, x:x, y:y, N:N, C:C, Q:Q };
+            let item = { ID:ID, T:T, E:E, D:D, K:K, x:x, y:y, N:N, C:C, Q:Q };
 
             if (data[10] != '' || data[11] != '') {
                 item.drA = parseInt( data[10] );
@@ -2731,20 +2696,20 @@ function wmeroadhistoryIMPORTLOOP() {
 
         v++;
     }
-    
+
     if (compitems.length) {
         var trx = wazeDB.transaction( compstores , 'readwrite');
         var reqarray = new Array();
 
         trx.oncomplete = function(event) {
-            
+
             var updatestores = new Array();
             var updateitems  = new Array();
 
-            for(var i=0; i<compitems.length; i++) {
-                var rekord = reqarray[i].result;
-                var item   = compitems[i];
-                
+            for(let i=0; i<compitems.length; i++) {
+                let rekord = reqarray[i].result;
+                let item   = compitems[i];
+
                 if (rekord) {
                     if (item.T >= rekord.T) {
                         updatestores.push( compstores[i] );
@@ -2765,9 +2730,9 @@ function wmeroadhistoryIMPORTLOOP() {
                     setTimeout(wmeroadhistoryIMPORTLOOP, 1);
                 };
                 trxupdate.onerror = function(error) {
-                };                
+                };
 
-                for(var i=0; i<updateitems.length; i++) {
+                for(let i=0; i<updateitems.length; i++) {
                     var updstore = trxupdate.objectStore( updatestores[i] );
                     updstore.put( updateitems[i] );
                 }
@@ -2776,30 +2741,30 @@ function wmeroadhistoryIMPORTLOOP() {
                 getId('wmerh_progress_info').innerHTML = lang.importeddata + (importcount - importchunk) + ' / ' + (importmaxcount - 2);
                 setTimeout(wmeroadhistoryIMPORTLOOP, 1);
             }
-            
+
         };
         trx.onerror = function(error) {
-        };                
+        };
 
-        for(var i=0; i<compitems.length; i++) {
-            var store = trx.objectStore( compstores[i] );
-            var req = store.get( compitems[i].ID );
+        for(let i=0; i<compitems.length; i++) {
+            let store = trx.objectStore( compstores[i] );
+            let req = store.get( compitems[i].ID );
             reqarray.push(req);
         }
     }
-    
+
     if (saveitems.length) {
-        var trx = wazeDB.transaction( savestores , 'readwrite');
+        let trx = wazeDB.transaction( savestores , 'readwrite');
 
         trx.oncomplete = function(event) {
             getId('wmerh_progress_info').innerHTML = lang.importeddata + (importcount - importchunk) + ' / ' + (importmaxcount - 2);
             setTimeout(wmeroadhistoryIMPORTLOOP, 1);
         };
         trx.onerror = function(error) {
-        };                
+        };
 
-        for(var i=0; i<saveitems.length; i++) {
-            var store = trx.objectStore( savestores[i] );
+        for(let i=0; i<saveitems.length; i++) {
+            let store = trx.objectStore( savestores[i] );
             store.put( saveitems[i] );
         }
     }
@@ -2815,11 +2780,11 @@ function wmeroadhistoryIMPORTLOOP() {
 function wmeroadhistorydatabaseInit() {
 
     var openrequest = window.indexedDB.open( wazeDataBaseName, 2 );
-    
+
     openrequest.onsuccess = function(event) {
         wazeDB = event.target.result;
         console.log("WMERoadHistory.DataBase.Create.OK = ", openrequest.result.name );
-        
+
         setTimeout(wmeroadhistoryIMPORTLOOP, 100);
     };
 
@@ -2827,9 +2792,9 @@ function wmeroadhistorydatabaseInit() {
         importexportenable(1);
     };
 
-    openrequest.onupgradeneeded = function(event) { 
+    openrequest.onupgradeneeded = function(event) {
         var db = event.target.result;
-        
+
         var objectStore1 = db.createObjectStore("segments", { keyPath: "ID", autoIncrement: false });
         objectStore1.createIndex("T",    "T",    { unique: false });
 
@@ -2847,13 +2812,11 @@ function wmeroadhistoryFILESELECTOR(evt) {
     getId('wmerh_progress_info').innerHTML         = lang.importeddata + '0 / 0';
 
     var files = evt.target.files;
-    
-    if (files.length) {
-        
-        var f = files[0];
-        
-        if (f.type.match('text/plain')) {
 
+    if (files.length) {
+        var f = files[0];
+
+        if (f.type.match('text/plain')) {
             var reader = new FileReader();
 
             reader.onloadstart = function(e) {
@@ -2862,22 +2825,22 @@ function wmeroadhistoryFILESELECTOR(evt) {
             reader.onload = function(e) {
                 importlines = e.target.result.split('¶\r\n');
                 importlines.pop();
-                
+
                 if (importlines.length == 0) {
                     importlines = e.target.result.split('¶\n');
                     importlines.pop();
                 }
-                
+
                 importchunk = 0;
                 importcount = 0;
                 importmaxcount = importlines.length;
                 importPercent = -1;
                 importbrowser = 0;
                 chunkdata = 0;
-                
+
                 if (importmaxcount) {
                     importexportenable(0);
-                    
+
                     if ( getId('wmeroadhistory_mergecheckbox').checked == false ) {
                         if (wazeDB) {
 
@@ -2899,15 +2862,14 @@ function wmeroadhistoryFILESELECTOR(evt) {
                             };
                         }
                     }
-                    else {
+                    else
                         setTimeout(wmeroadhistoryIMPORTLOOP, 100);
-                    }
 
                 }
                 else {
                     getId('wmerh_progress_percent').style.minWidth = '100%';
                     getId('wmerh_progress_percent').innerHTML      = '100%';
-                    
+
                     setTimeout(progressFadeOut, 5000);
                     importexportenable(1);
                 }
@@ -2923,7 +2885,7 @@ function databaseExport(maxcount) {
     var count = 0;
     var exportpercent = -1;
     var txt = '';
-    
+
     //var firefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
     //var chrome  = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
     //txt += '[BROWSER]¶\r\n';
@@ -2932,12 +2894,12 @@ function databaseExport(maxcount) {
     //else              txt += 'other¶\r\n';
 
     txt += '[SEGMENTSDATA]¶\r\n';
-    
+
 
     //zmiana przeszukiwania bazy wg. primary key jest szybsze
     var store = wazeDB.transaction( ["segments"] ,'readonly').objectStore("segments");
     var index = store.openCursor();
-    
+
     index.onerror = function(event) {
         importexportenable(1);
     };
@@ -2986,11 +2948,11 @@ function databaseExport(maxcount) {
             //zmiana przeszukiwania bazy wg. primary key jest szybsze
             var store2 = wazeDB.transaction( ['changes'] ,'readonly').objectStore('changes');
             var index2 = store2.openCursor();
-            
+
             index2.onerror = function(event) {
                 importexportenable(1);
             }
-            
+
             index2.onsuccess = function(event) {
                 var cursor2 = event.target.result;
                 if (cursor2) {
@@ -3047,12 +3009,12 @@ function databaseExport(maxcount) {
                     getId('wmerh_progress_percent').innerHTML      = '100%';
                     getId('wmerh_progress_info').innerHTML         = lang.exporteddata + count + ' / ' + maxcount;
 
-                    var t = new Date;
+                    let t = new Date;
 
-                    var blob = new Blob([ txt ], {type: "text/plain;charset=utf-8"});
-                    var y = t.getFullYear();
-                    var m = t.getMonth() + 1;
-                    var d = t.getDate();
+                    let blob = new Blob([ txt ], {type: "text/plain;charset=utf-8"});
+                    let y = t.getFullYear();
+                    let m = t.getMonth() + 1;
+                    let d = t.getDate();
                     if (m < 10) m = '0' + m;
                     if (d < 10) d = '0' + d;
                     saveAs(blob, 'wmeroadhistory_' + y + '-' + m + '-' + d + '_' + t.toLocaleTimeString() + '.txt' );
@@ -3066,15 +3028,15 @@ function databaseExport(maxcount) {
 }
 //--------------------------------------------------------------------------------------------------------
 function wmeroadhistoryEXPORT() {
-    
+
     getId('wmerh_progress').className              = 'loading';
     getId('wmerh_progress_percent').style.minWidth = '0%';
     getId('wmerh_progress_percent').innerHTML      = '0%';
     getId('wmerh_progress_info').innerHTML         = lang.exporteddata + '0 / 0';
     importexportenable(0);
-    
+
     var maxcount = 0;
-    
+
     var objstore = wazeDB.transaction(["segments"], "readonly").objectStore("segments");
     var requestcount = objstore.count();
     requestcount.onerror = function() {
@@ -3090,34 +3052,32 @@ function wmeroadhistoryEXPORT() {
         }
         requestcount2.onsuccess = function() {
             maxcount += requestcount2.result;
-            
+
             databaseExport(maxcount);
         }
 
     }
-    
+
 }
 //--------------------------------------------------------------------------------------------------------
 function progressFadeOut() {
-    
     //sprawdzenie czy w czasie czekania na efekt transition nie rozpoczęto kolejnego importu
     //zezwolenie na zniknięcie paska postępu tylko wtedy, gdy proces importu został ukończony
-    if (importcount == importmaxcount) {
+    if (importcount == importmaxcount)
         getId('wmerh_progress').className = '';
-    }
 }
 //--------------------------------------------------------------------------------------------------------
 function update_multi_checkboxes(event) {
-    
+
     var src = event.target.id;
     var c1 = '_wmeRoadHistoryShowCircleShort';
     var c2 = '_wmeRoadHistoryShowCircleLong';
     if (src == c1) getId(c2).checked = false;
     if (src == c2) getId(c1).checked = false;
-}    
+}
 //--------------------------------------------------------------------------------------------------------
 function showstatsdelayed() {
-    
+
     if (getId('_wmeRoadHistorySummaryStats').checked == false) {
         getId('wmeroadhistory_stats').innerHTML = '';
         return;
@@ -3127,22 +3087,22 @@ function showstatsdelayed() {
     var sortable = [];
     for(ed in stats) {
         var item = stats[ed];
-        var count = 0;
+        let count = 0;
         for(c in item) { count++; }
         sortable.push( [ed, count] );
         if (count > maxcount) maxcount = count;
     }
-    
+
     sortable.sort(function(b, a) {return a[1] - b[1]});
 
     if (sortable.length) {
         getId('wmeroadhistory_stats').innerHTML = '<br>';
-        for(var i=0; i<sortable.length; i++) {
-            var autor  = sortable[i][0];
-            var count  = sortable[i][1];
-            var pasek = parseInt(150 * count / maxcount);
+        for(let i=0; i<sortable.length; i++) {
+            let autor  = sortable[i][0];
+            let count  = sortable[i][1];
+            let pasek = parseInt(150 * count / maxcount);
 
-            var klasa = 'wmeroadhistory_rank0';
+            let klasa = 'wmeroadhistory_rank0';
             if (autor.indexOf('(1)')>=0)     klasa = 'wmeroadhistory_rank1';
             if (autor.indexOf('(2)')>=0)     klasa = 'wmeroadhistory_rank2';
             if (autor.indexOf('(3)')>=0)     klasa = 'wmeroadhistory_rank3';
@@ -3169,136 +3129,138 @@ function initialiseWMERoadHistory()
     if (docurl.indexOf( "/pl/" ) >=0 ) lang = langPL;
 
     var addon       = document.createElement('section');
-	addon.id        = "wmeroadhistory-addon";
+    addon.id        = "wmeroadhistory-addon";
     addon.innerHTML = ''
-    + '<div style="margin-bottom: 5px;"><b style="margin:0px; padding:0px;"><a href="https://greasyfork.org/pl/scripts/8593-wme-road-history" target="_blank"><u>WME Road History</u></a></b> &nbsp; v' + wmech_version + '</div>'
-    + '<button id=wmeroadhistory_scanarea class="btn btn-default" style="min-width:150px; margin: 0px; "></button>'
-    + '<div    id=wmeroadhistory_log     style="">&nbsp;</div>'
-    + '<div class=wmeroadhistory_noselect style="margin-top: 10px; ">'
-    +     '<div id=wmeroadhistory_tab1>' + lang.changes + '</div>'
-    +     '<div id=wmeroadhistory_tab2>' + lang.edits   + '</div>'
-    +     '<div id=wmeroadhistory_tab3>' + lang.options + '</div>'
-    +     '<div id=wmeroadhistory_tab9></div>'
-    + '</div>'
-    + '<div id=wmeroadhistory_options style="text-align: center; display:none; ">'
-    +     '<div id=wmeroadhistory_wrapper style="display:none; "></div>'
-    +     '<div id=wmerh_dbinfo></div>'
-    +     '<br>'
-    +     '<button id=wmeroadhistory_import class="wmerh_button_enabled" style=" margin: 0px; ">' + lang.imports + '</button> &nbsp; '
-    +     '<button id=wmeroadhistory_export class="wmerh_button_enabled" style=" margin: 0px; ">' + lang.exports + '</button>'
-    +     '<div><input id=wmeroadhistory_mergecheckbox type="checkbox" style="margin-top:10px;" title="' + lang.mergedatatip + '" />' + lang.mergedata + '</div>'
-    +     '<div id=wmerh_progress>'
-    +         '<div id=wmerh_progress_bar><div id=wmerh_progress_percent>0%</div></div>'
-    +         '<div id=wmerh_progress_info></div>'
-    +     '</div>'
-    +     '<hr style="margin:5px; padding:0px;">'
-    +     '<p style="margin-bottom:10px;"><b>' + lang.customize + '</b></p>'
-    +     '<div style="text-align: left; ">'
-    +         '<div style="text-align: left; ">' + lang.rowsperpage + ' &nbsp; <input id=_wmeRoadHistoryRows type="number" min=5 max=1000 step=5  size="4" value="50" style="width:60px" /></div><br>'
-    +         '<div style="text-align: left; "><input id=_wmeRoadHistoryDateRange type="checkbox" style="" />' + lang.daterange + '</div>'
-    +         '<div>'
-    +               '<p style="min-width: 70px; display: inline-block; ">' + lang.showfromdate + '</p>'
-    +               '<input type="number" min="2000" max="2999"  size="4" id="_wmeRoadHistoryFromYear"   style="width:65px; margin: 2px; "/>'
-    +               '<input type="number" min="1"    max="12"    size="2" id="_wmeRoadHistoryFromMonth"  style="width:45px; margin: 2px; "/>'
-    +               '<input type="number" min="1"    max="31"    size="2" id="_wmeRoadHistoryFromDay"    style="width:45px; margin: 2px; "/>'
-    +         '</div>'
-    +         '<div>'
-    +               '<p style="min-width: 70px; display: inline-block; ">' + lang.showtodate    + '</p>'
-    +               '<input type="number" min="2000" max="2999"  size="4" id="_wmeRoadHistoryToYear"     style="width:65px; margin: 2px; "/>'
-    +               '<input type="number" min="1"    max="12"    size="2" id="_wmeRoadHistoryToMonth"    style="width:45px; margin: 2px; "/>'
-    +               '<input type="number" min="1"    max="31"    size="2" id="_wmeRoadHistoryToDay"      style="width:45px; margin: 2px; "/>'
-    +         '</div>'
-    +         '<div style="text-align: left; "><input id=_wmeRoadHistoryFullTime         type="checkbox"             />' + lang.fulltime        + '</div>'
-    +         '<div style="text-align: left; "><input id=_wmeRoadHistoryShowCircle       type="checkbox"   checked   />' + lang.showcircle      + '</div>'
-    +         '<div style="text-align: left; "><input id=_wmeRoadHistoryShowCircleShort  type="checkbox"   checked   />' + lang.showcircleshort + '</div>'
-    +         '<div style="text-align: left; "><input id=_wmeRoadHistoryShowCircleLong   type="checkbox"             />' + lang.showcirclelong  + '</div>'
-    +         '<div style="text-align: left; "><input id=_wmeRoadHistorySummaryStats     type="checkbox"   checked   />' + lang.summarystats    + '</div>'
-    +     '</div>'
-    + '</div>'
-    + '<div id=wmeroadhistory_stats style="font-family:Tahoma; font-size:11px; ">'
-    + '</div>'
-    + '<div id=wmeroadhistory_list_buttons_1 style="text-align: center; margin:0px; background: #f8f8f8; padding: 5px; visibility: hidden; ">'
-    +     '<button id=wmeroadhistory_prev class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >&lt;&lt; ' + lang.prev + '</button>'
-    +     '<button id=wmeroadhistory_next class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >' + lang.next + ' &gt;&gt;</button>'
-    +     '<div id=wmeroadhistory_rangeinfo></div>'
-    + '</div>'
-    + '<div id=wmeroadhistory_list>'
-    + '</div>'
-    + '<div id=wmeroadhistory_list_buttons_2 style="text-align: center; margin:0px; background: #f8f8f8; padding: 5px; visibility: hidden; ">'
-    +     '<button id=wmeroadhistory_prev2 class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >&lt;&lt; ' + lang.prev + '</button>'
-    +     '<button id=wmeroadhistory_next2 class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >' + lang.next + ' &gt;&gt;</button>'
-    + '</div>'
-	+ '<style>'
-    +     '.wmeroadhistory_hovbutton:hover  { cursor:pointer; color: #0000FF; text-decoration: underline; }'
-    +     '#wmeroadhistory_list div         { padding-left: 15px; border: 0px solid #f0f0f0; border-bottom-width: 1px; padding-top:5px; padding-bottom:5px; }'
+        + '<div style="margin-bottom: 5px;"><b style="margin:0px; padding:0px;"><a href="https://greasyfork.org/pl/scripts/8593-wme-road-history" target="_blank"><u>WME Road History</u></a></b> &nbsp; v' + wmech_version + '</div>'
+        + '<button id=wmeroadhistory_scanarea class="btn btn-default" style="min-width:150px; margin: 0px; "></button>'
+        + '<div    id=wmeroadhistory_log     style="">&nbsp;</div>'
+        + '<div class=wmeroadhistory_noselect style="margin-top: 10px; ">'
+        +     '<div id=wmeroadhistory_tab1>' + lang.changes + '</div>'
+        +     '<div id=wmeroadhistory_tab2>' + lang.edits   + '</div>'
+        +     '<div id=wmeroadhistory_tab3>' + lang.options + '</div>'
+        +     '<div id=wmeroadhistory_tab9></div>'
+        + '</div>'
+        + '<div id=wmeroadhistory_options style="text-align: center; display:none; ">'
+        +     '<div id=wmeroadhistory_wrapper style="display:none; "></div>'
+        +     '<div id=wmerh_dbinfo></div>'
+        +     '<br>'
+        +     '<button id=wmeroadhistory_import class="wmerh_button_enabled" style=" margin: 0px; ">' + lang.imports + '</button> &nbsp; '
+        +     '<button id=wmeroadhistory_export class="wmerh_button_enabled" style=" margin: 0px; ">' + lang.exports + '</button>'
+        +     '<div><input id=wmeroadhistory_mergecheckbox type="checkbox" style="margin-top:10px;" title="' + lang.mergedatatip + '" />' + lang.mergedata + '</div>'
+        +     '<div id=wmerh_progress>'
+        +         '<div id=wmerh_progress_bar><div id=wmerh_progress_percent>0%</div></div>'
+        +         '<div id=wmerh_progress_info></div>'
+        +     '</div>'
+        +     '<hr style="margin:5px; padding:0px;">'
+        +     '<p style="margin-bottom:10px;"><b>' + lang.customize + '</b></p>'
+        +     '<div style="text-align: left; ">'
+        +         '<div style="text-align: left; ">' + lang.rowsperpage + ' &nbsp; <input id=_wmeRoadHistoryRows type="number" min=5 max=1000 step=5  size="4" value="50" style="width:60px" /></div><br>'
+        +         '<div style="text-align: left; "><input id=_wmeRoadHistoryDateRange type="checkbox" style="" />' + lang.daterange + '</div>'
+        +         '<div>'
+        +               '<p style="min-width: 70px; display: inline-block; ">' + lang.showfromdate + '</p>'
+        +               '<input type="number" min="2000" max="2999"  size="4" id="_wmeRoadHistoryFromYear"   style="width:65px; margin: 2px; "/>'
+        +               '<input type="number" min="1"    max="12"    size="2" id="_wmeRoadHistoryFromMonth"  style="width:45px; margin: 2px; "/>'
+        +               '<input type="number" min="1"    max="31"    size="2" id="_wmeRoadHistoryFromDay"    style="width:45px; margin: 2px; "/>'
+        +         '</div>'
+        +         '<div>'
+        +               '<p style="min-width: 70px; display: inline-block; ">' + lang.showtodate    + '</p>'
+        +               '<input type="number" min="2000" max="2999"  size="4" id="_wmeRoadHistoryToYear"     style="width:65px; margin: 2px; "/>'
+        +               '<input type="number" min="1"    max="12"    size="2" id="_wmeRoadHistoryToMonth"    style="width:45px; margin: 2px; "/>'
+        +               '<input type="number" min="1"    max="31"    size="2" id="_wmeRoadHistoryToDay"      style="width:45px; margin: 2px; "/>'
+        +         '</div>'
+        +         '<div style="text-align: left; "><input id=_wmeRoadHistoryFullTime         type="checkbox"             />' + lang.fulltime        + '</div>'
+        +         '<div style="text-align: left; "><input id=_wmeRoadHistoryShowCircle       type="checkbox"   checked   />' + lang.showcircle      + '</div>'
+        +         '<div style="text-align: left; "><input id=_wmeRoadHistoryShowCircleShort  type="checkbox"   checked   />' + lang.showcircleshort + '</div>'
+        +         '<div style="text-align: left; "><input id=_wmeRoadHistoryShowCircleLong   type="checkbox"             />' + lang.showcirclelong  + '</div>'
+        +         '<div style="text-align: left; "><input id=_wmeRoadHistorySummaryStats     type="checkbox"   checked   />' + lang.summarystats    + '</div>'
+        +     '</div>'
+        + '</div>'
+        + '<div id=wmeroadhistory_stats style="font-family:Tahoma; font-size:11px; ">'
+        + '</div>'
+        + '<div id=wmeroadhistory_list_buttons_1 style="text-align: center; margin:0px; background: #f8f8f8; padding: 5px; visibility: hidden; ">'
+        +     '<button id=wmeroadhistory_prev class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >&lt;&lt; ' + lang.prev + '</button>'
+        +     '<button id=wmeroadhistory_next class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >' + lang.next + ' &gt;&gt;</button>'
+        +     '<div id=wmeroadhistory_rangeinfo></div>'
+        + '</div>'
+        + '<div id=wmeroadhistory_list>'
+        + '</div>'
+        + '<div id=wmeroadhistory_list_buttons_2 style="text-align: center; margin:0px; background: #f8f8f8; padding: 5px; visibility: hidden; ">'
+        +     '<button id=wmeroadhistory_prev2 class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >&lt;&lt; ' + lang.prev + '</button>'
+        +     '<button id=wmeroadhistory_next2 class="btn btn-default" style="margin: 2px; padding:0px; font-weight:normal; height:20px; padding-left:20px; padding-right:20px; " >' + lang.next + ' &gt;&gt;</button>'
+        + '</div>'
+        + '<style>'
+        +     '.wmeroadhistory_hovbutton:hover  { cursor:pointer; color: #0000FF; text-decoration: underline; }'
+        +     '#wmeroadhistory_list div         { padding-left: 15px; border: 0px solid #f0f0f0; border-bottom-width: 1px; padding-top:5px; padding-bottom:5px; }'
     //+     '#wmeroadhistory_list div:hover   { background: #E6F2FF; }'
-    +     '#wmeroadhistory_list h1          { margin: 0px; padding: 0px; line-height: 100%; font-size: 15px; display: inline-block; left: -15px; position: relative; padding-left: 15px; }'
-    +     '#wmeroadhistory_list h1:hover    { cursor: pointer; color: #0D5270; text-decoration: underline; }'
-    +     '#wmeroadhistory_list h1          { background-position: 0px 2px; background-repeat: no-repeat; }'
-    +     '#wmeroadhistory_list h1          { background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAMCAIAAAA/PgD0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA7ElEQVR4nGWNQUvDQBSE34Z1N65dU0mMaSkoItriqVdP/nOP/gEPYkV6MSgloUVsTbPvjYd4qHT4Tt8wjAIA0PP7x+yz2rTh8EBfF9nN8EwpUgw8PL3W2+CdU0oB+Ppep7G+v72KXsrFspWecyASAES9I1dvZVYu9LxeGWuDgHZirZnXK90wQEJ72bBoH5vqJ+x3aWyj8zRpmRnYpWW+SBM9SLw39bL5Nz2xukh8JMB0lAfmIPIH83SUCxAJ4djZ8Wk/iLAgsEzyvndWCBFAAE0GaRqbIJI5My6yTqpq3XQfTQiPb+Xd5dBo3ZlfDOiS3+b9cP0AAAAASUVORK5CYII="); }'
-    +     '#wmeroadhistory_list h2          { margin: 0px; padding: 0px; line-height: 100%; color: #606060; font-size: 100%;  }'
-    +     '#wmeroadhistory_list ul          { margin: 0px; padding: 0px; margin-left: 30px; margin-top: 5px; font-family: Tahoma; font-size: 11px; margin-bottom:5px; color: #606060; line-height: 18px; }'
-    +     '#wmeroadhistory_list h4          { margin: 0px; padding: 0px; line-height: 100%; color: #606060; font-family: Tahoma; font-size: 11px; display: inline-block; }'
-    +     '#wmeroadhistory_list h5          { margin: 0px; padding: 0px; line-height: 100%; color: #606060; font-family: Tahoma; font-size: 11px; float:left; margin-top: 5px; }'
-    +     '#wmeroadhistory_list h6          { margin: 0px; padding: 0px; line-height: 100%; font-family: Tahoma; font-size: 11px; float:right; font-weight: normal; margin-top: 5px; }'
-    +     '#wmeroadhistory_list p           { margin: 0px; }'
-    +     '#wmeroadhistory_list hr          { margin: 0px; clear: both; border: 0px; outline: 0px; height: 0px; }'
-    +     '#wmeroadhistory_tab1, #wmeroadhistory_tab2, #wmeroadhistory_tab3                         { font-size: 12px; display: inline-block; width: 85px; height: 30px; line-height: 30px; border: 1px solid #e0e0e0; border-radius: 5px 5px 0 0; border-bottom-width: 0px; text-align: center; }'
-    +     '#wmeroadhistory_tab1:hover, #wmeroadhistory_tab2:hover, #wmeroadhistory_tab3:hover       { background: #d0d0d0; cursor: pointer; }'
-    +     '#wmeroadhistory_tab9             { width: 100%; height:1px; background: #e0e0e0; }'
-    +     '.wmeroadhistory_tab_active       { font-weight: bold;   background: #e9e9e9; }'
-    +     '.wmeroadhistory_tab_noactive     { font-weight: normal; background: #f8f8f8; }'
-    +     '.wmeroadhistory_noselect         { -webkit-touch-callout: none;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }'
-    +     '.wmeroadhistory_rank0            { color: #808080 }'
-    +     '.wmeroadhistory_rank1            { color: #E12222 }'
-    +     '.wmeroadhistory_rank2            { color: #EB712D }'
-    +     '.wmeroadhistory_rank3            { color: #349B20 }'
-    +     '.wmeroadhistory_rank4            { color: #3176E9 }'
-    +     '.wmeroadhistory_rank5            { color: #C000C0 }'
-    +     '.wmeroadhistory_newseg           { color: #ffffff; font-weight: bold; background: #4CD429; border-radius: 5px 5px 5px 5px; padding: 1px 5px 1px 5px; margin-left: 3px; }'
-    +     '.wmeroadhistory_turnlink         { display: inline-block; color: #0091FF; text-decoration: underline; }'
-    +     '.wmeroadhistory_turnlink:hover   { color: #000000; text-decoration: underline; cursor: pointer; }'
-    +     '.wmeroadhistory_turnlink         { -webkit-touch-callout: none;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }'
-    +     '.wmeroadhistory_error            { color: #D72C2C }'
-    +     '.wmeroadhistory_kind             { color: #404040 }'
-    +     '.wmeroadhistory_toll             { color: #CC38CC }'
-    +     '.wmeroadhistory_trbefore         { color: #808080 }'
-    +     '.wmeroadhistory_trafter          { color: #D72C2C }'
-    +     '.wmeroadhistory_uturn            { color: #808080 }'
-    +     '.wmeroadhistory_trturn           { color: #D72C2C }'
-    +     '.wmeroadhistory_amonly           { color: #59899e; font-weight:bold; }'
-    +     '#wmerh_progress                  { opacity: 0; height: 0; margin-top: 10px; margin-bottom: 20px; }'
-    +     '#wmerh_progress                  { -moz-transition: opacity 0.5s linear; -o-transition: opacity 0.5s linear; -webkit-transition: opacity 0.5s linear; }'
-    +     '#wmerh_progress.loading          { opacity: 1.0; height: auto; }'
-    +     '#wmerh_progress_bar              { margin: 0px; padding: 2px; border: 1px solid #a0a0a0; border-radius: 5px; font-size: 14px; width: 75%; margin: 0 auto; }'
-    +     '#wmerh_progress_percent          { background-color: #C0E7F1; width: 0px; color: #000000; white-space: nowrap; }'
-    +     '#wmerh_progress_info             { font-family: Tahoma; font-size: 11px; color: #000000; }'
-    +     '.wmerh_button_disabled           { disabled: true;  color: #C0C0C0; }'
-    +     '.wmerh_button_enabled            { disabled: false; color: #000000; }'
-    +     '#wmerh_dbinfo                    { font-size: 11px; color: #a0a0a0; font-weight: normal; text-align: center; padding:0px; font-style: italic; }'
-    +     '#wmeroadhistory_rangeinfo        { font-family: Tahoma; font-size: 11px; color: #007EFF; }'
-	+     '.wmeroadhistorymarker1           { display:block; width:33px; height:40px; margin-left:-16px; margin-top:-36px; }'
-	+     '.wmeroadhistorymarker1           { background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAoCAYAAABw65OnAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAACUJJREFUeNqsWA1sVFkVPu9nZjoz/ZmW0gJLf2i7si1lU6hYiMvC/siKyBokTYA1EYkJGA0SQ0j8BdaIQiIaRJQogRA2ITR21yXIJgUpsJFlkUSSVtulQO0PpfaPdqadzsyb9/y+mSm03Te0oC+5eXfe3Hu+755z7jnnXkWe/lHRlJUrVyp+v18Z+5iWlmbV19db6LKZTyNQmeYYgqqtra16YWGhbhiGIxgMai6XS41Go4qmaVYoFDLdbndU1/UIxhkYZ4CUmSBlPSuJGHhlZaUWiUScXq/Xhd9uRVFS2EzTdKqqqqGpZvyJohu2LGuUDWODw8PDIYfDEb5582b0SWSSkeDKNazOQWCsNBUg6cuWLcvbsGHDF/Lz8z8L9RdDE9kAduK/MMb2wjx32tra/n769Om6a9euteO/IWgqQEIYG4FmonZE7Ehw9XoKntHR0VSsxLdmzZr5mzdv3jpnzpzXIVgfjYh80ivS/lBkBH0PqOb5RD6TLZKCPkgZ9+/fv3DixImj586da4YmH0JcAPJGoRVjMhHFjgAeN5hnQK0zDxw48LUlS5Z8S9W0lKt3Rf7cKPJRm0jUxvU0uOzSfJGvLBBZXgQy0ejojRs3frdr165TMGEPtDUIfwpOJqJMNgFY0+6ZHo9n9tGjR38CB/vS3T6RfX8VaXgwfY8vnyXyg1dFimaIwFH/snXr1rdHRka6sLABaDc43jTa+IWkp6enYEAGSMw6fvz4XhKovyPy3fdFuoaebh//B55w9l8i87JEKop8zy9fvvy52traj2GqyNDQkNHd3f0pEsrq1asdYJmGQTkHDx78Rnl5+VuXWrCa8/aqn87DeRdvixRDG4tApKysLHT+/Pkm+EcY8iMtLS3mIxIwgz4wMODBLshatWpVxaZNm356b0DVd5y1JzB+v01uqg2Zq60iL8NHFhTPrujs7PzbnTt3+qCN8Pz58w2YyoxFv46ODu53OqNvy5Yt34QTuvZdFAkb8n95KIfyKJfyiUM84hKfJNTc3FwnfMG7ePHieXl5eSsut8Sd0LLsW9J4Pm5MqnPiHMqjXMonDvGIy2kqcwAjIkzhXb9+PeOA9l7j/7byz+WJfB87I8018TvlUj5xiEdc4utUyezZs52IbN6CgoJFwUg8DljPAJ4K0O98XqQ0R+Tb74r4QxP/p1zKJw7xYBZnzBVmzpzJJERzpPh8vsLbiITmMzD4KgLUe5vjfTsCfCiX8olDPOISX0cOUAOBgM6EhCzoa29PeMoUmW2MKFX/9cr4m+r+RX1iTBIZ7YMIZLluH/HwM4avh8NhBWGa2mBCdIwaTzbFugXxNoSVdkLguvL493dB4OeXptYY5RMHJFTixvBjXq2qFkgIWsTj1BxP2gG1DSKvlcRXLnkJAvi279L0zObB+okzhht7O51OC0nFhLdGkf/7C3xTCyLgUOjpCfApyBAhDvGIS3wdNQAJGKwJ+vr6Wkvy03MdCCHhJ4TqjqE4cLorTmLssaao05zwkxKk+/vt/feIh08G8dWenh4TCYvqCTY3N//DCQIriqZe0YWWxwQc+vS08PI8EIH8pqamW8QjLvHVuXPnUi0h2Gnk5MmTH+Idql6YPFraRc6IEa9spxpPucQ6deoUcUbYJ77KYhRBIwyTDCNwdDU0NNQvfk7kpYLpk5BpEKC8yrkijY2N9SgBu4hHXOJzN1sARwSNDKM/gDR+BhWQ/0eviWR6EmkxWZt8EEjSKOeHr4hQLuUTh3jEJX4slff39wsKmFhqR99CVRVcWrmwqmKOonyAesBI4qSm8piLmcQpU+Avv1mLCivLslAA/76uru4jfO7G9hy8desW95j5qLKCagQqEgQQBXVhf3FxsWvpwsKypXnxemA4bA9CAZEkjjjTK/LbN0VeRKl3+fLl2v379/8JztiJercfOzGIBRsTyjtqANW0hdCN+jRqYVIb0q5atXBe6ZtlitI3ItLca1/g2D1r54v8+suIZxmWefHixZo9e/a8g8qtHXGhB1EyAN8I29WYgkondoSD10YZO+A098D6QUX5Cy98sdTlXg3BjCFtg/FSf3JV5YTq36oQeRv+tB7hPBL09x87duzI4cOH34f6O7C4HmjaD62HWFElLflZcdOUmJAGMtkgk5uVlZW/ffv2tVVVVa+kpqZm8MyxsQYgk9TwYzhfNfIKAtDQ9evXLx06dOgsysZ/Q1Y3wHshy8/0MfkQpE1WIxhacFITodXgFoIXh6i+K1eu3D5z5szHs2bN0qpeLCnxIVpebn2shVcR4L6HWqLl9u1/bty48QCArqDEv4eFdCFt96If04DdKUyzsyeJdHV1mUVFRQbIhOFMocQZMwQyHStWrCh5qTQrpwkauYtTWG6ayB/WUf2Bhzt37vwVVv8JwjL3fTcWMIDdNoJjYThhAsvumJ/0aAi1RuGoIazGD5v2QfADtM7du3f/cTgQGPzZ6yJzQOCXb4h4NdPEYek4AlELyHbBBL0g4ed8hubxh2y7HTaBQHV1NXO8A+HUyfILWnDBniz/dPR12NWBlarQ0ODK5csq15UqSiEyL9Rcd+TIkQsgwD1E0hE0nku17OxslpA6ZKoZGRkKSCU1R8wpcTJyefHAjmkQwvNoOkhkoM93Goh4WRYgCYXgO+7S54sK29vbW3fs2FEDwAD+p/moYZJ3Y54HC3CjubgQxqKKigorcfD51BZlpaPjKOjhSZznUfzMxKRMCM/E/yzJUA1IOoTN5Unt6tWr/kWLFuXu3bv3w97eWBBxYR6LFR3Niz6vFLxoJEPNQpxmInxHc3JyTPhdjMT4JKyw6KTKsXoHL0LwdvN+Am8eCfhN4y0NhXIuYoi1bdu2D/C/iabRdHgTnIGIdxsG5kVoEt7mYC6DqwMBS8PcR8DjSVh0IGzBWG0BYSx+o9wZnJjwCQoj0X7O5W82XtNgfCzA8c3GCxySYMPvMK8EIINJchQ4BiKmZUsCqjUwIMhqB6YI0THBmGMcPLSQAPAk8WZTAAAeipWoFy0S4u9YdrcsVmyMCwYLGG5xXiHxZJi4XLNsI+bYPRUSjDZjxgyVJTlIaXgrWI3Ci7JYzki8J3g5VD7WDwaDtIGFE7jJRcHXTRyCozC5OTlgKVNcqCmJbSvQ0IQrw6mesStFzq2pqRkDtL08+68AAwDXuYBD7DWeHAAAAABJRU5ErkJggg==); }'
-    + '</style>'
+        +     '#wmeroadhistory_list h1          { margin: 0px; padding: 0px; line-height: 100%; font-size: 15px; display: inline-block; left: -15px; position: relative; padding-left: 15px; }'
+        +     '#wmeroadhistory_list h1:hover    { cursor: pointer; color: #0D5270; text-decoration: underline; }'
+        +     '#wmeroadhistory_list h1          { background-position: 0px 2px; background-repeat: no-repeat; }'
+        +     '#wmeroadhistory_list h1          { background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAMCAIAAAA/PgD0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA7ElEQVR4nGWNQUvDQBSE34Z1N65dU0mMaSkoItriqVdP/nOP/gEPYkV6MSgloUVsTbPvjYd4qHT4Tt8wjAIA0PP7x+yz2rTh8EBfF9nN8EwpUgw8PL3W2+CdU0oB+Ppep7G+v72KXsrFspWecyASAES9I1dvZVYu9LxeGWuDgHZirZnXK90wQEJ72bBoH5vqJ+x3aWyj8zRpmRnYpWW+SBM9SLw39bL5Nz2xukh8JMB0lAfmIPIH83SUCxAJ4djZ8Wk/iLAgsEzyvndWCBFAAE0GaRqbIJI5My6yTqpq3XQfTQiPb+Xd5dBo3ZlfDOiS3+b9cP0AAAAASUVORK5CYII="); }'
+        +     '#wmeroadhistory_list h2          { margin: 0px; padding: 0px; line-height: 100%; color: #606060; font-size: 100%;  }'
+        +     '#wmeroadhistory_list ul          { margin: 0px; padding: 0px; margin-left: 30px; margin-top: 5px; font-family: Tahoma; font-size: 11px; margin-bottom:5px; color: #606060; line-height: 18px; }'
+        +     '#wmeroadhistory_list h4          { margin: 0px; padding: 0px; line-height: 100%; color: #606060; font-family: Tahoma; font-size: 11px; display: inline-block; }'
+        +     '#wmeroadhistory_list h5          { margin: 0px; padding: 0px; line-height: 100%; color: #606060; font-family: Tahoma; font-size: 11px; float:left; margin-top: 5px; }'
+        +     '#wmeroadhistory_list h6          { margin: 0px; padding: 0px; line-height: 100%; font-family: Tahoma; font-size: 11px; float:right; font-weight: normal; margin-top: 5px; }'
+        +     '#wmeroadhistory_list p           { margin: 0px; }'
+        +     '#wmeroadhistory_list hr          { margin: 0px; clear: both; border: 0px; outline: 0px; height: 0px; }'
+        +     '#wmeroadhistory_tab1, #wmeroadhistory_tab2, #wmeroadhistory_tab3                         { font-size: 12px; display: inline-block; width: 85px; height: 30px; line-height: 30px; border: 1px solid #e0e0e0; border-radius: 5px 5px 0 0; border-bottom-width: 0px; text-align: center; }'
+        +     '#wmeroadhistory_tab1:hover, #wmeroadhistory_tab2:hover, #wmeroadhistory_tab3:hover       { background: #d0d0d0; cursor: pointer; }'
+        +     '#wmeroadhistory_tab9             { width: 100%; height:1px; background: #e0e0e0; }'
+        +     '.wmeroadhistory_tab_active       { font-weight: bold;   background: #e9e9e9; }'
+        +     '.wmeroadhistory_tab_noactive     { font-weight: normal; background: #f8f8f8; }'
+        +     '.wmeroadhistory_noselect         { -webkit-touch-callout: none;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }'
+        +     '.wmeroadhistory_rank0            { color: #808080 }'
+        +     '.wmeroadhistory_rank1            { color: #E12222 }'
+        +     '.wmeroadhistory_rank2            { color: #EB712D }'
+        +     '.wmeroadhistory_rank3            { color: #349B20 }'
+        +     '.wmeroadhistory_rank4            { color: #3176E9 }'
+        +     '.wmeroadhistory_rank5            { color: #C000C0 }'
+        +     '.wmeroadhistory_newseg           { color: #ffffff; font-weight: bold; background: #4CD429; border-radius: 5px 5px 5px 5px; padding: 1px 5px 1px 5px; margin-left: 3px; }'
+        +     '.wmeroadhistory_turnlink         { display: inline-block; color: #0091FF; text-decoration: underline; }'
+        +     '.wmeroadhistory_turnlink:hover   { color: #000000; text-decoration: underline; cursor: pointer; }'
+        +     '.wmeroadhistory_turnlink         { -webkit-touch-callout: none;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }'
+        +     '.wmeroadhistory_error            { color: #D72C2C }'
+        +     '.wmeroadhistory_kind             { color: #404040 }'
+        +     '.wmeroadhistory_toll             { color: #CC38CC }'
+        +     '.wmeroadhistory_trbefore         { color: #808080 }'
+        +     '.wmeroadhistory_trafter          { color: #D72C2C }'
+        +     '.wmeroadhistory_uturn            { color: #808080 }'
+        +     '.wmeroadhistory_trturn           { color: #D72C2C }'
+        +     '.wmeroadhistory_amonly           { color: #59899e; font-weight:bold; }'
+        +     '#wmerh_progress                  { opacity: 0; height: 0; margin-top: 10px; margin-bottom: 20px; }'
+        +     '#wmerh_progress                  { -moz-transition: opacity 0.5s linear; -o-transition: opacity 0.5s linear; -webkit-transition: opacity 0.5s linear; }'
+        +     '#wmerh_progress.loading          { opacity: 1.0; height: auto; }'
+        +     '#wmerh_progress_bar              { margin: 0px; padding: 2px; border: 1px solid #a0a0a0; border-radius: 5px; font-size: 14px; width: 75%; margin: 0 auto; }'
+        +     '#wmerh_progress_percent          { background-color: #C0E7F1; width: 0px; color: #000000; white-space: nowrap; }'
+        +     '#wmerh_progress_info             { font-family: Tahoma; font-size: 11px; color: #000000; }'
+        +     '.wmerh_button_disabled           { disabled: true;  color: #C0C0C0; }'
+        +     '.wmerh_button_enabled            { disabled: false; color: #000000; }'
+        +     '#wmerh_dbinfo                    { font-size: 11px; color: #a0a0a0; font-weight: normal; text-align: center; padding:0px; font-style: italic; }'
+        +     '#wmeroadhistory_rangeinfo        { font-family: Tahoma; font-size: 11px; color: #007EFF; }'
+        +     '.wmeroadhistorymarker1           { display:block; width:33px; height:40px; margin-left:-16px; margin-top:-36px; }'
+        +     '.wmeroadhistorymarker1           { background-image:url(data:image/png;base64,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); }'
+        + '</style>'
     ;
 
     var userTabs = getId('user-info');
-	var navTabs = getElementsByClassName('nav-tabs', userTabs)[0];
-	var tabContent = getElementsByClassName('tab-content', userTabs)[0];
+    var navTabs = getElementsByClassName('nav-tabs', userTabs)[0];
+    var tabContent = getElementsByClassName('tab-content', userTabs)[0];
 
-	var newtab = document.createElement('li');
-	newtab.innerHTML = '<a id=sidepanel-wmeroadhistory-tab href="#sidepanel-wmeroadhistory" data-toggle="tab" style="" >Road History</a>';
+    var newtab = document.createElement('li');
+    newtab.innerHTML = '<a id=sidepanel-wmeroadhistory-tab href="#sidepanel-wmeroadhistory" data-toggle="tab" style="" >Road History</a>';
     newtab.id = 'wmeroadhistory_tab';
-	navTabs.appendChild(newtab);
+    navTabs.appendChild(newtab);
 
-	addon.id = "sidepanel-wmeroadhistory";
-	addon.className = "tab-pane";
-	tabContent.appendChild(addon);
+    addon.id = "sidepanel-wmeroadhistory";
+    addon.className = "tab-pane";
+    tabContent.appendChild(addon);
 
-    if (typeof W == 'undefined')              W = window.W;
-    if (typeof W.loginManager == 'undefined') W.loginManager = window.W.loginManager;
+    if (typeof W == 'undefined')
+        W = window.W;
+    if (typeof W.loginManager == 'undefined')
+        W.loginManager = window.W.loginManager;
     if (W.loginManager && W.loginManager.isLoggedIn()) {
-        thisUser = W.loginManager.user;
+        let thisUser = W.loginManager.user;
         var lev = thisUser.normalizedLevel;
         if (thisUser !== null && (lev*lev >= lev+lev+lev || thisUser.isAreaManager)) {
             getId('wmeroadhistory_scanarea').onclick  = wmeroadhistorySCANAREA;
@@ -3313,22 +3275,22 @@ function initialiseWMERoadHistory()
             getId('wmeroadhistory_export').onclick    = wmeroadhistoryEXPORT;
         }
     }
-    
+
     getId('_wmeRoadHistoryShowCircleShort').onchange = update_multi_checkboxes;
     getId('_wmeRoadHistoryShowCircleLong').onchange  = update_multi_checkboxes;
-    
+
     updateSaveButton();
-    
-    var t = new Date();
+
+    let t = new Date();
     getId('_wmeRoadHistoryFromYear').value  = 2010;
     getId('_wmeRoadHistoryFromMonth').value = 1;
     getId('_wmeRoadHistoryFromDay').value   = 1;
-    
+
     getId('_wmeRoadHistoryToYear').max      = t.getFullYear() + 1;
     getId('_wmeRoadHistoryToYear').value    = t.getFullYear() + 1;
     getId('_wmeRoadHistoryToMonth').value   = 1;
     getId('_wmeRoadHistoryToDay').value     = 1;
-    
+
     getId('_wmeRoadHistoryDateRange').onchange = reset_statistics;
     getId('_wmeRoadHistoryFromYear').onchange  = reset_statistics;
     getId('_wmeRoadHistoryFromMonth').onchange = reset_statistics;
@@ -3340,12 +3302,11 @@ function initialiseWMERoadHistory()
     loadOptions();
 
     var list = document.getElementsByTagName("div");
-    for(var i=0; i<list.length; i++) {
-        var id = list[i].id;
-        var p = id.indexOf("PendingOperation");
-        if (p>=0) {
+    for(let i=0; i<list.length; i++) {
+        let id = list[i].id;
+        let p = id.indexOf("PendingOperation");
+        if (p>=0)
             wazepending = list[i];
-        }
     }
 
     W.vent.on("operationPending", function() {
